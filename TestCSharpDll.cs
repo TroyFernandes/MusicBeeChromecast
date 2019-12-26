@@ -89,6 +89,7 @@ namespace MusicBeePlugin
         // MusicBee is closing the plugin (plugin is being disabled by user or MusicBee is shutting down)
         public void Close(PluginCloseReason reason)
         {
+            //Disconnect here maybe?
 
 
 
@@ -111,16 +112,6 @@ namespace MusicBeePlugin
                     // perform startup initialisation
                     mbApiInterface.MB_RegisterCommand("Testing: TESTING", DoNothingAsync);
 
-
-                    Panel newPanel = new Panel();
-                    newPanel.Bounds = mbApiInterface.MB_GetPanelBounds(PluginPanelDock.ApplicationWindow);
-                    newPanel.Name = "TEST PANEL";
-
-                    mbApiInterface.MB_AddPanel(newPanel, PluginPanelDock.TextBox);
-
-
-                    //save the active audio device
-                    //mbApiInterface.Player_GetOutputDevices(out _, out activeAudioDevice);
 
                     switch (mbApiInterface.Player_GetPlayState())
                     {
@@ -259,10 +250,6 @@ namespace MusicBeePlugin
                 mediaChannel = cs.ChromecastMediaChannel;
                 csSender = cs.ChromecastSender;
 
-                //if (mediaChannel != null)
-                //{
-                //    mbApiInterface.Player_SetOutputDevice(null);
-                //}
             }
 
 
