@@ -7,17 +7,25 @@ using Nito.AsyncEx.Synchronous;
 using GoogleCast.Channels;
 using GoogleCast.Models.Media;
 using System.Collections;
-
+using System.Collections.Generic;
+using System.Drawing;
+using System.Runtime.InteropServices;
+using System.Windows.Forms.VisualStyles;
 
 namespace MusicBeePlugin
 {
     public partial class Plugin
     {
+
+
         private MusicBeeApiInterface mbApiInterface;
         private PluginInfo about = new PluginInfo();
         private Stack queue = new Stack();
-        private Sender sender;
+        private Sender csSender = null;
         private IMediaChannel mediaChannel = null;
+
+        private string activeAudioDevice = null;
+
         IReceiver device = null;
 
 
@@ -99,25 +107,57 @@ namespace MusicBeePlugin
             switch (type)
             {
                 case NotificationType.PluginStartup:
+
                     // perform startup initialisation
                     mbApiInterface.MB_RegisterCommand("Testing: TESTING", DoNothingAsync);
 
 
+                    Panel newPanel = new Panel();
+                    newPanel.Bounds = mbApiInterface.MB_GetPanelBounds(PluginPanelDock.ApplicationWindow);
+                    newPanel.Name = "TEST PANEL";
+
+                    mbApiInterface.MB_AddPanel(newPanel, PluginPanelDock.TextBox);
+
+
+                    //save the active audio device
+                    //mbApiInterface.Player_GetOutputDevices(out _, out activeAudioDevice);
 
                     switch (mbApiInterface.Player_GetPlayState())
                     {
                         case PlayState.Playing:
                         case PlayState.Paused:
+
                             // ...
                             break;
                     }
                     break;
+
+                case NotificationType.VolumeLevelChanged:
+                    if (csSender == null)
+                    {
+                        break;
+                    }
+                    try
+                    {
+
+                        csSender.GetChannel<IReceiverChannel>().SetVolumeAsync(mbApiInterface.Player_GetVolume()).WaitAndUnwrapException();
+                    }
+                    catch (Exception e)
+                    {
+
+                    }
+
+                    break;
+
                 case NotificationType.TrackChanged:
 
                     if (mediaChannel == null)
                     {
                         break;
                     }
+
+                    //mbApiInterface.Player_PlayPause();
+                    mbApiInterface.Player_SetOutputDevice("");
 
                     string artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
 
@@ -217,16 +257,156 @@ namespace MusicBeePlugin
                 cs.ShowDialog();
 
                 mediaChannel = cs.ChromecastMediaChannel;
+                csSender = cs.ChromecastSender;
 
-
+                //if (mediaChannel != null)
+                //{
+                //    mbApiInterface.Player_SetOutputDevice(null);
+                //}
             }
 
 
 
         }
 
+        #region DockablePanel
+        //  presence of this function indicates to MusicBee that this plugin has a dockable panel. MusicBee will create the control and pass it as the panel parameter
+        //  you can add your own controls to the panel if needed
+        //  you can control the scrollable area of the panel using the mbApiInterface.MB_SetPanelScrollableArea function
+        //  to set a MusicBee header for the panel, set about.TargetApplication in the Initialise function above to the panel header text
+        public int OnDockablePanelCreated(Control panel)
+        {
+            //    return the height of the panel and perform any initialisation here
+            //    MusicBee will call panel.Dispose() when the user removes this panel from the layout configuration
+            //    < 0 indicates to MusicBee this control is resizable and should be sized to fill the panel it is docked to in MusicBee
+            //    = 0 indicates to MusicBee this control resizeable
+            //    > 0 indicates to MusicBee the fixed height for the control.Note it is recommended you scale the height for high DPI screens(create a graphics object and get the DpiY value)
+
+            panel.UIThread(() =>
+            {
+                //Previous button
+                PictureBox previous = new PictureBox
+                {
+                    Location = new Point(2, 0),
+                    SizeMode = PictureBoxSizeMode.StretchImage,
+                    ClientSize = new Size(25, 25),
+                    Image = Properties.Resources.back
+
+                };
+                panel.Controls.Add(previous);
+
+                //Play button
+                PictureBox play = new PictureBox
+                {
+                    Location = new Point(29, 0),
+                    SizeMode = PictureBoxSizeMode.StretchImage,
+                    ClientSize = new Size(25, 25),
+                    Image = Properties.Resources.play
+
+                };
+
+                panel.Controls.Add(play);
+
+                //Next song button
+                PictureBox next = new PictureBox
+                {
+                    Location = new Point(59, 0),
+                    SizeMode = PictureBoxSizeMode.StretchImage,
+                    ClientSize = new Size(25, 25),
+                    Image = Properties.Resources.forward
+
+                };
+                panel.Controls.Add(next);
+
+                //Chromecast icon
+                PictureBox chromecastSelect = new PictureBox
+                {
+                    Location = new Point(200, 0),
+                    SizeMode = PictureBoxSizeMode.StretchImage,
+                    ClientSize = new Size(25, 21),
+                    Image = Properties.Resources.chromecast_icon_connect
+
+                };
+                panel.Controls.Add(chromecastSelect);
+
+                TrackbarEx trackbar = new TrackbarEx
+                {
+                    AutoSize = false,
+                    Width = 100,
+                    Minimum = 0,
+                    Maximum = 100,
+                    TickStyle = TickStyle.None,
+                    Location = new Point(86, 0)
+                };
+
+                panel.Controls.Add(trackbar);
+
+
+            });
+
+            return 0;
+        }
+
+        // presence of this function indicates to MusicBee that the dockable panel created above will show menu items when the panel header is clicked
+        // return the list of ToolStripMenuItems that will be displayed
+        public List<ToolStripItem> GetHeaderMenuItems()
+        {
+            List<ToolStripItem> list = new List<ToolStripItem>();
+            list.Add(new ToolStripMenuItem("A menu item"));
+            return list;
+        }
+
+        private void panel_Paint(object sender, PaintEventArgs e)
+        {
+            e.Graphics.Clear(Color.Red);
+            //TextRenderer.DrawText(e.Graphics, "hello", SystemFonts.CaptionFont, new Point(10, 10), Color.Blue);
+        }
+        #endregion
+
+
+
+
 
     }
 
+    public static class ControlExtensions
+    {
+        public static void UIThread(this Control @this, Action code)
+        {
+            if (null != @this && (!@this.Disposing || !@this.IsDisposed))
+            {
+                if (@this.InvokeRequired)
+                {
+                    @this.BeginInvoke(code);
+                }
+                else
+                {
+                    code.Invoke();
+                }
+            }
+        }
+    }
 
+    #region Chromecast Volume Trackbar
+    internal partial class TrackbarEx : TrackBar
+    {
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        public extern static int SendMessage(IntPtr hWnd, uint msg, int wParam, int lParam);
+
+        private static int MakeParam(int loWord, int hiWord)
+        {
+            return (hiWord << 16) | (loWord & 0xffff);
+        }
+
+        protected override void OnGotFocus(EventArgs e)
+        {
+            base.OnGotFocus(e);
+            SendMessage(this.Handle, 0x0128, MakeParam(1, 0x1), 0);
+        }
+
+
+
+    }
+
+    #endregion
 }

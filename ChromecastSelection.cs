@@ -17,6 +17,7 @@ namespace MusicBeePlugin
     public partial class ChromecastSelction : MaterialForm
     {
         public IMediaChannel ChromecastMediaChannel { get; set; } = null;
+        public Sender ChromecastSender { get; set; } = null;
 
         private readonly MaterialSkinManager materialSkinManager;
 
@@ -68,7 +69,6 @@ namespace MusicBeePlugin
 
         async void MyButtonHandler(object sender, EventArgs e, IEnumerable<IReceiver> devices)
         {
-            MessageBox.Show((sender as MaterialButton).Text + " Button Clicked");
 
             var sender2 = new Sender();
 
@@ -89,6 +89,7 @@ namespace MusicBeePlugin
                 var mediaChannel = sender2.GetChannel<IMediaChannel>();
                 await sender2.LaunchAsync(mediaChannel);
 
+                ChromecastSender = sender2;
                 ChromecastMediaChannel = mediaChannel;
             }
 
