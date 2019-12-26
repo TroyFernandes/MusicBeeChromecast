@@ -1,28 +1,13 @@
 ﻿using System;
-using System.Drawing;
 using System.Windows.Forms;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Diagnostics;
-using System.Windows;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Data;
-using System.Windows.Input;
-using System.Drawing;
-using System.Windows.Forms;
 using GoogleCast;
 using Nito.AsyncEx.Synchronous;
-using GoogleCast;
 using GoogleCast.Channels;
-using GoogleCast.Models;
 using GoogleCast.Models.Media;
 using System.Collections;
+
 
 namespace MusicBeePlugin
 {
@@ -32,7 +17,7 @@ namespace MusicBeePlugin
         private PluginInfo about = new PluginInfo();
         private Stack queue = new Stack();
         private Sender sender;
-        private IMediaChannel mediaChannel;
+        private IMediaChannel mediaChannel = null;
         IReceiver device = null;
 
 
@@ -59,11 +44,6 @@ namespace MusicBeePlugin
             about.MinApiRevision = MinApiRevision;
             about.ReceiveNotifications = (ReceiveNotificationFlags.PlayerEvents | ReceiveNotificationFlags.TagEvents);
             about.ConfigurationPanelHeight = 0;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
-
-
-            //client = new Player(host);
-            //client.Connect();
-            //MessageBox.Show("Connection Successful");
 
 
             return about;
@@ -101,16 +81,8 @@ namespace MusicBeePlugin
         // MusicBee is closing the plugin (plugin is being disabled by user or MusicBee is shutting down)
         public void Close(PluginCloseReason reason)
         {
-            try
-            {
 
 
-            }
-            catch (Exception e)
-            {
-                System.Windows.Forms.MessageBox.Show(e.Message);
-
-            }
 
         }
 
@@ -130,27 +102,6 @@ namespace MusicBeePlugin
                     // perform startup initialisation
                     mbApiInterface.MB_RegisterCommand("Testing: TESTING", DoNothingAsync);
 
-                    IEnumerable<IReceiver> receiver = new DeviceLocator().FindReceiversAsync().WaitAndUnwrapException();
-
-
-                    foreach (var x in receiver)
-                    {
-                        if (x.FriendlyName == "PC")
-                        {
-                            device = x;
-                        }
-                    }
-
-                    sender = new Sender();
-
-                    //Connect to the device
-                    sender.ConnectAsync(device).WaitAndUnwrapException();
-
-
-                    //Launch the default media receiver application
-                    mediaChannel = sender.GetChannel<IMediaChannel>();
-                    sender.LaunchAsync(mediaChannel).WaitAndUnwrapException();
-
 
 
                     switch (mbApiInterface.Player_GetPlayState())
@@ -163,6 +114,10 @@ namespace MusicBeePlugin
                     break;
                 case NotificationType.TrackChanged:
 
+                    if (mediaChannel == null)
+                    {
+                        break;
+                    }
 
                     string artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
 
@@ -247,34 +202,26 @@ namespace MusicBeePlugin
         public void DoNothingAsync(object sender, EventArgs e)
         {
 
-            Window window = new Window();
+            //Window window = new Window();
+            //// This is your color to convert from
+            //System.Drawing.Color color = Color.FromArgb(mbApiInterface.Setting_GetSkinElementColour(SkinElement.SkinInputPanel, ElementState.ElementStateDefault, ElementComponent.ComponentBackground)); ;
+            //System.Windows.Media.Color newColor = System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B);
+            //var brush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B));
+            //window.Background = brush;
+            //window.Show();
 
-            // This is your color to convert from
-            System.Drawing.Color color = Color.FromArgb(mbApiInterface.Setting_GetSkinElementColour(SkinElement.SkinInputPanel, ElementState.ElementStateDefault, ElementComponent.ComponentBackground)); ;
-            System.Windows.Media.Color newColor = System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B);
-            var brush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B));
-            window.Background = brush;
+            using (var cs = new ChromecastSelction())
+            {
+                cs.StartPosition = FormStartPosition.CenterParent;
 
+                cs.ShowDialog();
 
-            window.Show();
-
-
-            //var receiver = (await new DeviceLocator().FindReceiversAsync());
-
-            //List<IReceiver> newList = receiver.ToList();
-            string devices = "Test\n";
-            //foreach (IReceiver x in newList)
-            //{
-            //    devices += x.FriendlyName + " - " + x.IPEndPoint + "\n";
-            //}
+                mediaChannel = cs.ChromecastMediaChannel;
 
 
+            }
 
-        }
 
-
-        public void Queue()
-        {
 
         }
 

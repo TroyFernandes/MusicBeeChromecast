@@ -89,6 +89,9 @@
     <Reference Include="GoogleCast, Version=1.6.7.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\GoogleCast.1.6.7\lib\netstandard2.0\GoogleCast.dll</HintPath>
     </Reference>
+    <Reference Include="MaterialSkin">
+      <HintPath>F:\Users\Troy\Downloads\MaterialSkin.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Extensions.DependencyInjection, Version=2.1.1.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.Extensions.DependencyInjection.2.1.1\lib\net461\Microsoft.Extensions.DependencyInjection.dll</HintPath>
     </Reference>
@@ -155,6 +158,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ChromecastSelection.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ChromecastSelection.Designer.cs">
+      <DependentUpon>ChromecastSelection.cs</DependentUpon>
+    </Compile>
     <Compile Include="MusicBeeInterface.cs" />
     <Compile Include="TestCSharpDll.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -184,6 +193,11 @@
       <ProductName>Windows Installer 3.1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ChromecastSelection.resx">
+      <DependentUpon>ChromecastSelection.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
