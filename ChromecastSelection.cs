@@ -16,6 +16,7 @@ namespace MusicBeePlugin
 {
     public partial class ChromecastSelction : MaterialForm
     {
+
         public IMediaChannel ChromecastMediaChannel { get; set; } = null;
         public Sender ChromecastSender { get; set; } = null;
 
@@ -91,6 +92,9 @@ namespace MusicBeePlugin
 
                 ChromecastSender = sender2;
                 ChromecastMediaChannel = mediaChannel;
+
+                this.FormClosing -= ChromecastSelection_FormClosing;
+                this.Close();
             }
 
         }

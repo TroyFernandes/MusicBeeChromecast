@@ -11,26 +11,25 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms.VisualStyles;
+using System.Web;
+using System.Net;
+using System.Net.Sockets;
 
 namespace MusicBeePlugin
 {
     public partial class Plugin
     {
 
-
+        private int? WebserverPort = 23614;
+        private WebServer webServer;
         private MusicBeeApiInterface mbApiInterface;
         private PluginInfo about = new PluginInfo();
         private Stack queue = new Stack();
         private Sender csSender = null;
         private IMediaChannel mediaChannel = null;
 
-        private string activeAudioDevice = null;
 
-        IReceiver device = null;
-
-
-        const string host = "192.168.1.47"; // ChromeCast host
-        const string contentUrl = "http://192.168.1.232:8080";
+        string contentUrl = null;
         const string contentType = "audio/mp3";
         const string library = @"E:\Users\Troy\Music";
 
@@ -66,14 +65,6 @@ namespace MusicBeePlugin
             // if about.ConfigurationPanelHeight is set to 0, you can display your own popup window
             if (panelHandle != IntPtr.Zero)
             {
-                //Panel configPanel = (Panel)Panel.FromHandle(panelHandle);
-                //Label prompt = new Label
-                //{
-                //    AutoSize = true,
-                //    Location = new Point(0, 0),
-                //    Text = "Hue Settings:"
-                //};
-                //configPanel.Controls.AddRange(new Control[] { prompt });
             }
             return false;
         }
@@ -89,8 +80,14 @@ namespace MusicBeePlugin
         // MusicBee is closing the plugin (plugin is being disabled by user or MusicBee is shutting down)
         public void Close(PluginCloseReason reason)
         {
-            //Disconnect here maybe?
+            //Close the webserver
+            webServer.Dispose();
 
+            //Disconnect here maybe?
+            if (csSender != null)
+            {
+                csSender.Disconnect();
+            }
 
 
         }
@@ -109,10 +106,6 @@ namespace MusicBeePlugin
             {
                 case NotificationType.PluginStartup:
 
-                    // perform startup initialisation
-                    mbApiInterface.MB_RegisterCommand("Testing: TESTING", DoNothingAsync);
-
-
                     switch (mbApiInterface.Player_GetPlayState())
                     {
                         case PlayState.Playing:
@@ -124,45 +117,36 @@ namespace MusicBeePlugin
                     break;
 
                 case NotificationType.VolumeLevelChanged:
-                    if (csSender == null)
-                    {
-                        break;
-                    }
-                    try
-                    {
 
-                        csSender.GetChannel<IReceiverChannel>().SetVolumeAsync(mbApiInterface.Player_GetVolume()).WaitAndUnwrapException();
-                    }
-                    catch (Exception e)
-                    {
-
-                    }
 
                     break;
 
                 case NotificationType.TrackChanged:
 
-                    if (mediaChannel == null)
+                    if (mediaChannel == null || WebserverPort == null)
                     {
                         break;
                     }
 
-                    //mbApiInterface.Player_PlayPause();
-                    mbApiInterface.Player_SetOutputDevice("");
+                    mbApiInterface.Player_SetMute(true);
 
                     string artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
 
 
+                    //const string contentUrl = "http://192.168.1.232:8080";
+                    // const string library = @"E:\Users\Troy\Music";
+
+
                     string songName = @mbApiInterface.NowPlaying_GetFileUrl().Replace(library, "");
                     songName = songName.Replace(@"\", @"/");
-
+                    songName = HttpUtility.UrlPathEncode(songName);
                     string combined = contentUrl + songName;
-
+                    Debug.WriteLine(combined);
                     string directory = mbApiInterface.NowPlaying_GetArtworkUrl();
 
                     string artwork = Path.GetFileName(directory);
 
-                    string artUrl = "http://192.168.1.232:8080/" + artwork;
+                    string artUrl = "http://localhost:8080/" + artwork;
 
 
                     GenericMediaMetadata metadata = new GenericMediaMetadata
@@ -226,35 +210,7 @@ namespace MusicBeePlugin
             return null;
         }
 
-        public void HandleDoNothing()
-        {
-        }
 
-        public void DoNothingAsync(object sender, EventArgs e)
-        {
-
-            //Window window = new Window();
-            //// This is your color to convert from
-            //System.Drawing.Color color = Color.FromArgb(mbApiInterface.Setting_GetSkinElementColour(SkinElement.SkinInputPanel, ElementState.ElementStateDefault, ElementComponent.ComponentBackground)); ;
-            //System.Windows.Media.Color newColor = System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B);
-            //var brush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B));
-            //window.Background = brush;
-            //window.Show();
-
-            using (var cs = new ChromecastSelction())
-            {
-                cs.StartPosition = FormStartPosition.CenterParent;
-
-                cs.ShowDialog();
-
-                mediaChannel = cs.ChromecastMediaChannel;
-                csSender = cs.ChromecastSender;
-
-            }
-
-
-
-        }
 
         #region DockablePanel
         //  presence of this function indicates to MusicBee that this plugin has a dockable panel. MusicBee will create the control and pass it as the panel parameter
@@ -314,10 +270,13 @@ namespace MusicBeePlugin
                     Image = Properties.Resources.chromecast_icon_connect
 
                 };
+                chromecastSelect.Click += new EventHandler(onChromecastSelection);
                 panel.Controls.Add(chromecastSelect);
 
                 TrackbarEx trackbar = new TrackbarEx
                 {
+
+                    Capture = true,
                     AutoSize = false,
                     Width = 100,
                     Minimum = 0,
@@ -325,6 +284,13 @@ namespace MusicBeePlugin
                     TickStyle = TickStyle.None,
                     Location = new Point(86, 0)
                 };
+
+                //Get the player volume
+                //csSender.GetChannel<IReceiverChannel>().Status;
+
+
+
+                trackbar.ValueChanged += new EventHandler(trackbar1_ValueChanged);
 
                 panel.Controls.Add(trackbar);
 
@@ -351,7 +317,79 @@ namespace MusicBeePlugin
         #endregion
 
 
+        protected void onChromecastSelection(object sender, EventArgs e)
+        {
+            using (var cs = new ChromecastSelction())
+            {
+                cs.StartPosition = FormStartPosition.CenterParent;
 
+                cs.ShowDialog();
+
+                mediaChannel = cs.ChromecastMediaChannel;
+                csSender = cs.ChromecastSender;
+                if (csSender == null)
+                {
+                    return;
+                }
+                if (StartWebserver() == -1)
+                {
+                    //Error here
+                }
+
+            }
+
+        }
+
+        private async void trackbar1_ValueChanged(object sender, EventArgs e)
+        {
+            if (csSender != null)
+            {
+                try
+                {
+
+                    await csSender.GetChannel<IReceiverChannel>().SetVolumeAsync((float)(sender as TrackbarEx).Value / 100);
+
+                }
+                catch (Exception e2)
+                {
+
+                }
+
+            }
+        }
+
+
+
+        private int StartWebserver()
+        {
+            try
+            {
+                webServer = new WebServer(library);
+                //WebserverPort = webServer.PORT;
+                contentUrl = "http://" + GetLocalIPAddress() + ":" + WebserverPort;
+                return 0;
+            }
+            catch (Exception e)
+            {
+                //Catch error here: TODO
+                return -1;
+            }
+
+        }
+
+
+        public static string GetLocalIPAddress()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+            throw new Exception("No network adapters with an IPv4 address in the system!");
+        }
 
 
     }
