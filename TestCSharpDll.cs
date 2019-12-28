@@ -21,7 +21,9 @@ namespace MusicBeePlugin
     {
 
         private int? WebserverPort = 23614;
-        private WebServer webServer;
+        private int? ImageServerPort = 23615;
+        private WebServer mediaWebServer;
+        private WebServer imageWebServer;
         private MusicBeeApiInterface mbApiInterface;
         private PluginInfo about = new PluginInfo();
         private Stack queue = new Stack();
@@ -29,7 +31,9 @@ namespace MusicBeePlugin
         private IMediaChannel mediaChannel = null;
 
 
-        string contentUrl = null;
+        string mediaContentURL = null;
+        string imageContentURL = null;
+
         const string contentType = "audio/mp3";
         const string library = @"E:\Users\Troy\Music";
 
@@ -80,8 +84,7 @@ namespace MusicBeePlugin
         // MusicBee is closing the plugin (plugin is being disabled by user or MusicBee is shutting down)
         public void Close(PluginCloseReason reason)
         {
-            //Close the webserver
-            webServer.Dispose();
+            StopWebserver();
 
             //Disconnect here maybe?
             if (csSender != null)
@@ -133,36 +136,33 @@ namespace MusicBeePlugin
                     string artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
 
 
-                    //const string contentUrl = "http://192.168.1.232:8080";
+                    //const string mediaContentURL = "http://192.168.1.232:8080";
                     // const string library = @"E:\Users\Troy\Music";
 
 
                     string songName = @mbApiInterface.NowPlaying_GetFileUrl().Replace(library, "");
                     songName = songName.Replace(@"\", @"/");
                     songName = HttpUtility.UrlPathEncode(songName);
-                    string combined = contentUrl + songName;
+                    string combined = mediaContentURL + songName;
                     Debug.WriteLine(combined);
-                    string directory = mbApiInterface.NowPlaying_GetArtworkUrl();
 
-                    string artwork = Path.GetFileName(directory);
 
-                    string artUrl = "http://localhost:8080/" + artwork;
 
 
                     GenericMediaMetadata metadata = new GenericMediaMetadata
                     {
-
                         Subtitle = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist),
                         Title = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle),
                         Images = new[] {
                             new GoogleCast.Models.Image
                             {
-                                Url = artUrl
+                                Url = imageContentURL + "/" + Path.GetFileName(mbApiInterface.NowPlaying_GetArtworkUrl())
                             }},
+
 
                     };
 
-
+                    Debug.WriteLine(imageContentURL + "/" + Path.GetFileName(mbApiInterface.NowPlaying_GetArtworkUrl()));
                     try
                     {
                         var mediaStatus = mediaChannel.LoadAsync(
@@ -170,7 +170,7 @@ namespace MusicBeePlugin
                             {
                                 ContentId = combined,
                                 StreamType = StreamType.Buffered,
-                                Metadata = metadata
+                                Metadata = metadata,
 
                             }).WaitAndUnwrapException();
 
@@ -227,39 +227,39 @@ namespace MusicBeePlugin
 
             panel.UIThread(() =>
             {
-                //Previous button
-                PictureBox previous = new PictureBox
-                {
-                    Location = new Point(2, 0),
-                    SizeMode = PictureBoxSizeMode.StretchImage,
-                    ClientSize = new Size(25, 25),
-                    Image = Properties.Resources.back
+                ////Previous button
+                //PictureBox previous = new PictureBox
+                //{
+                //    Location = new Point(2, 0),
+                //    SizeMode = PictureBoxSizeMode.StretchImage,
+                //    ClientSize = new Size(25, 25),
+                //    Image = Properties.Resources.back
 
-                };
-                panel.Controls.Add(previous);
+                //};
+                //panel.Controls.Add(previous);
 
-                //Play button
-                PictureBox play = new PictureBox
-                {
-                    Location = new Point(29, 0),
-                    SizeMode = PictureBoxSizeMode.StretchImage,
-                    ClientSize = new Size(25, 25),
-                    Image = Properties.Resources.play
+                ////Play button
+                //PictureBox play = new PictureBox
+                //{
+                //    Location = new Point(29, 0),
+                //    SizeMode = PictureBoxSizeMode.StretchImage,
+                //    ClientSize = new Size(25, 25),
+                //    Image = Properties.Resources.play
 
-                };
+                //};
 
-                panel.Controls.Add(play);
+                //panel.Controls.Add(play);
 
-                //Next song button
-                PictureBox next = new PictureBox
-                {
-                    Location = new Point(59, 0),
-                    SizeMode = PictureBoxSizeMode.StretchImage,
-                    ClientSize = new Size(25, 25),
-                    Image = Properties.Resources.forward
+                ////Next song button
+                //PictureBox next = new PictureBox
+                //{
+                //    Location = new Point(59, 0),
+                //    SizeMode = PictureBoxSizeMode.StretchImage,
+                //    ClientSize = new Size(25, 25),
+                //    Image = Properties.Resources.forward
 
-                };
-                panel.Controls.Add(next);
+                //};
+                //panel.Controls.Add(next);
 
                 //Chromecast icon
                 PictureBox chromecastSelect = new PictureBox
@@ -282,14 +282,11 @@ namespace MusicBeePlugin
                     Minimum = 0,
                     Maximum = 100,
                     TickStyle = TickStyle.None,
-                    Location = new Point(86, 0)
+                    Location = new Point(0, 0)
                 };
 
                 //Get the player volume
                 //csSender.GetChannel<IReceiverChannel>().Status;
-
-
-
                 trackbar.ValueChanged += new EventHandler(trackbar1_ValueChanged);
 
                 panel.Controls.Add(trackbar);
@@ -362,11 +359,20 @@ namespace MusicBeePlugin
 
         private int StartWebserver()
         {
+            if (mediaWebServer != null)
+            {
+                return 1;
+            }
             try
             {
-                webServer = new WebServer(library);
-                //WebserverPort = webServer.PORT;
-                contentUrl = "http://" + GetLocalIPAddress() + ":" + WebserverPort;
+
+
+                var webServer_temp = new WebServer(library, Path.GetDirectoryName(mbApiInterface.NowPlaying_GetArtworkUrl()));
+                mediaWebServer = (webServer_temp.MediaWebServer as WebServer);
+                imageWebServer = (webServer_temp.ImageWebServer as WebServer);
+                mediaContentURL = "http://" + GetLocalIPAddress() + ":" + WebserverPort;
+                imageContentURL = "http://" + GetLocalIPAddress() + ":" + ImageServerPort;
+
                 return 0;
             }
             catch (Exception e)
@@ -377,6 +383,17 @@ namespace MusicBeePlugin
 
         }
 
+        private void StopWebserver()
+        {
+            try
+            {
+                mediaWebServer.Stop();
+            }
+            catch (Exception e)
+            {
+                //TODO
+            }
+        }
 
         public static string GetLocalIPAddress()
         {

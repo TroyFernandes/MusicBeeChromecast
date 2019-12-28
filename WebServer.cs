@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
+using Microsoft.Owin;
 using Microsoft.Owin.FileSystems;
 using Microsoft.Owin.Hosting;
 using Microsoft.Owin.StaticFiles;
@@ -13,13 +15,14 @@ namespace MusicBeePlugin
 {
     public class WebServer : IDisposable
     {
-        private IDisposable webServer;
+        public IDisposable MediaWebServer { get; set; } = null;
+        public IDisposable ImageWebServer { get; set; } = null;
         bool disposed;
 
         private static readonly IPEndPoint DefaultLoopbackEndpoint = new IPEndPoint(IPAddress.Loopback, port: 0);
 
-        //public int? PORT { get; set; } = null;
-        public const int PORT = 23614;
+        public const int MEDIA_PORT = 23614;
+        public const int IMAGE_PORT = MEDIA_PORT + 1;
 
         protected virtual void Dispose(bool disposing)
         {
@@ -27,7 +30,15 @@ namespace MusicBeePlugin
             {
                 if (disposing)
                 {
-                    webServer.Dispose();
+                    if (MediaWebServer != null)
+                    {
+                        MediaWebServer.Dispose();
+                    }
+                    if (ImageWebServer != null)
+                    {
+                        ImageWebServer.Dispose();
+                    }
+                    Debug.WriteLine("closing webserver");
                 }
             }
 
@@ -41,22 +52,57 @@ namespace MusicBeePlugin
             GC.SuppressFinalize(this);
         }
 
-        public WebServer(string @directory)
+        public WebServer(string @musicDirectory, string @imageDirectory = null)
         {
-
-            var url = "http://*:" + PORT;
-            var root = directory;
-            var fileSystem = new PhysicalFileSystem(root);
-            var options = new FileServerOptions
+            try
             {
-                EnableDirectoryBrowsing = true,
-                FileSystem = fileSystem
-            };
-            options.StaticFileOptions.ContentTypeProvider = new CustomContentTypeProvider();
+                var mediaURL = "http://*:" + MEDIA_PORT;
+                var mediaRoot = musicDirectory;
+                var mediaFileSystem = new PhysicalFileSystem(mediaRoot);
+                var mediaServerOptions = new FileServerOptions
+                {
+                    EnableDirectoryBrowsing = true,
+                    FileSystem = mediaFileSystem
+                };
+                mediaServerOptions.StaticFileOptions.ContentTypeProvider = new CustomContentTypeProvider();
 
-            webServer = WebApp.Start(url, builder => builder.UseFileServer(options));
+                MediaWebServer = WebApp.Start(mediaURL, builder => builder.UseFileServer(mediaServerOptions));
 
-            Debug.WriteLine("Listening at " + url);
+                if (imageDirectory != null)
+                {
+                    var imageURL = "http://*:" + IMAGE_PORT;
+                    var imageRoot = imageDirectory;
+                    var imageFileSystem = new PhysicalFileSystem(imageRoot);
+                    var imageServerOptions = new FileServerOptions
+                    {
+                        EnableDirectoryBrowsing = true,
+                        FileSystem = imageFileSystem
+                    };
+
+                    imageServerOptions.StaticFileOptions.ContentTypeProvider = new CustomContentTypeProvider();
+                    ImageWebServer = WebApp.Start(imageURL, builder =>
+                    {
+                        builder.UseFileServer(imageServerOptions);
+                    });
+
+                }
+
+
+                Debug.WriteLine("Listening at " + mediaURL);
+
+
+            }
+            catch (Exception e)
+            {
+                //Change this after
+                throw new Exception("Webserver exception");
+            }
+
+        }
+
+
+        public void Example()
+        {
 
         }
 
@@ -65,18 +111,10 @@ namespace MusicBeePlugin
             public CustomContentTypeProvider()
             {
                 Mappings.Add(".flac", "audio/flac");
+                Mappings.Add(".tmp", "image/png");
             }
         }
 
-
-        //public void GetAvailablePort()
-        //{
-        //    using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
-        //    {
-        //        socket.Bind(DefaultLoopbackEndpoint);
-        //        PORT = ((IPEndPoint)socket.LocalEndPoint).Port;
-        //    }
-        //}
 
         public static string GetLocalIPAddress()
         {
@@ -91,7 +129,17 @@ namespace MusicBeePlugin
             throw new Exception("No network adapters with an IPv4 address in the system!");
         }
 
-
+        public void Stop()
+        {
+            if (MediaWebServer != null)
+            {
+                Dispose();
+            }
+            else
+            {
+                throw new NullReferenceException("Webserver is null");
+            }
+        }
 
 
     }
