@@ -21,9 +21,7 @@ namespace MusicBeePlugin
     {
 
         private int? WebserverPort = 23614;
-        private int? ImageServerPort = 23615;
         private WebServer mediaWebServer;
-        private WebServer imageWebServer;
         private MusicBeeApiInterface mbApiInterface;
         private PluginInfo about = new PluginInfo();
         private Stack queue = new Stack();
@@ -32,7 +30,6 @@ namespace MusicBeePlugin
 
 
         string mediaContentURL = null;
-        string imageContentURL = null;
 
         const string contentType = "audio/mp3";
         const string library = @"E:\Users\Troy\Music";
@@ -144,7 +141,7 @@ namespace MusicBeePlugin
                     songName = songName.Replace(@"\", @"/");
                     songName = HttpUtility.UrlPathEncode(songName);
                     string combined = mediaContentURL + songName;
-                    Debug.WriteLine(combined);
+                    //Debug.WriteLine(combined);
 
 
 
@@ -153,16 +150,8 @@ namespace MusicBeePlugin
                     {
                         Subtitle = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist),
                         Title = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle),
-                        Images = new[] {
-                            new GoogleCast.Models.Image
-                            {
-                                Url = imageContentURL + "/" + Path.GetFileName(mbApiInterface.NowPlaying_GetArtworkUrl())
-                            }},
-
-
                     };
 
-                    Debug.WriteLine(imageContentURL + "/" + Path.GetFileName(mbApiInterface.NowPlaying_GetArtworkUrl()));
                     try
                     {
                         var mediaStatus = mediaChannel.LoadAsync(
@@ -369,9 +358,7 @@ namespace MusicBeePlugin
 
                 var webServer_temp = new WebServer(library, Path.GetDirectoryName(mbApiInterface.NowPlaying_GetArtworkUrl()));
                 mediaWebServer = (webServer_temp.MediaWebServer as WebServer);
-                imageWebServer = (webServer_temp.ImageWebServer as WebServer);
                 mediaContentURL = "http://" + GetLocalIPAddress() + ":" + WebserverPort;
-                imageContentURL = "http://" + GetLocalIPAddress() + ":" + ImageServerPort;
 
                 return 0;
             }

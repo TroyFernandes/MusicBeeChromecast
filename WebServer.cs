@@ -16,13 +16,11 @@ namespace MusicBeePlugin
     public class WebServer : IDisposable
     {
         public IDisposable MediaWebServer { get; set; } = null;
-        public IDisposable ImageWebServer { get; set; } = null;
         bool disposed;
 
         private static readonly IPEndPoint DefaultLoopbackEndpoint = new IPEndPoint(IPAddress.Loopback, port: 0);
 
         public const int MEDIA_PORT = 23614;
-        public const int IMAGE_PORT = MEDIA_PORT + 1;
 
         protected virtual void Dispose(bool disposing)
         {
@@ -33,10 +31,6 @@ namespace MusicBeePlugin
                     if (MediaWebServer != null)
                     {
                         MediaWebServer.Dispose();
-                    }
-                    if (ImageWebServer != null)
-                    {
-                        ImageWebServer.Dispose();
                     }
                     Debug.WriteLine("closing webserver");
                 }
@@ -67,26 +61,6 @@ namespace MusicBeePlugin
                 mediaServerOptions.StaticFileOptions.ContentTypeProvider = new CustomContentTypeProvider();
 
                 MediaWebServer = WebApp.Start(mediaURL, builder => builder.UseFileServer(mediaServerOptions));
-
-                if (imageDirectory != null)
-                {
-                    var imageURL = "http://*:" + IMAGE_PORT;
-                    var imageRoot = imageDirectory;
-                    var imageFileSystem = new PhysicalFileSystem(imageRoot);
-                    var imageServerOptions = new FileServerOptions
-                    {
-                        EnableDirectoryBrowsing = true,
-                        FileSystem = imageFileSystem
-                    };
-
-                    imageServerOptions.StaticFileOptions.ContentTypeProvider = new CustomContentTypeProvider();
-                    ImageWebServer = WebApp.Start(imageURL, builder =>
-                    {
-                        builder.UseFileServer(imageServerOptions);
-                    });
-
-                }
-
 
                 Debug.WriteLine("Listening at " + mediaURL);
 
