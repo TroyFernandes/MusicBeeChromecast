@@ -104,14 +104,32 @@ namespace MusicBeePlugin
             // perform some action depending on the notification type
             switch (type)
             {
+                case NotificationType.PlayStateChanged:
+                    Debug.WriteLine("PlaystateChanged");
+                    Debug.WriteLine(mbApiInterface.Player_GetPlayState());
+                    if (csSender != null)
+                    {
+                        switch (mbApiInterface.Player_GetPlayState())
+                        {
+                            case PlayState.Paused:
+                                csSender.GetChannel<IMediaChannel>().PauseAsync().WaitWithoutException();
+                                break;
+
+                            case PlayState.Playing:
+                                csSender.GetChannel<IMediaChannel>().PlayAsync().WaitWithoutException();
+                                break;
+                        }
+                    }
+
+
+                    break;
+
                 case NotificationType.PluginStartup:
 
                     switch (mbApiInterface.Player_GetPlayState())
                     {
                         case PlayState.Playing:
                         case PlayState.Paused:
-
-                            // ...
                             break;
                     }
                     break;
@@ -216,40 +234,6 @@ namespace MusicBeePlugin
 
             panel.UIThread(() =>
             {
-                ////Previous button
-                //PictureBox previous = new PictureBox
-                //{
-                //    Location = new Point(2, 0),
-                //    SizeMode = PictureBoxSizeMode.StretchImage,
-                //    ClientSize = new Size(25, 25),
-                //    Image = Properties.Resources.back
-
-                //};
-                //panel.Controls.Add(previous);
-
-                ////Play button
-                //PictureBox play = new PictureBox
-                //{
-                //    Location = new Point(29, 0),
-                //    SizeMode = PictureBoxSizeMode.StretchImage,
-                //    ClientSize = new Size(25, 25),
-                //    Image = Properties.Resources.play
-
-                //};
-
-                //panel.Controls.Add(play);
-
-                ////Next song button
-                //PictureBox next = new PictureBox
-                //{
-                //    Location = new Point(59, 0),
-                //    SizeMode = PictureBoxSizeMode.StretchImage,
-                //    ClientSize = new Size(25, 25),
-                //    Image = Properties.Resources.forward
-
-                //};
-                //panel.Controls.Add(next);
-
                 //Chromecast icon
                 PictureBox chromecastSelect = new PictureBox
                 {
