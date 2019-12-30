@@ -14,12 +14,16 @@ using System.Windows.Forms.VisualStyles;
 using System.Web;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
+using System.ComponentModel;
+using System.Reflection;
+using System.Linq;
+using System.Xml;
 
 namespace MusicBeePlugin
 {
     public partial class Plugin
     {
-
         private int? WebserverPort = 23614;
         private WebServer mediaWebServer;
         private MusicBeeApiInterface mbApiInterface;
@@ -28,11 +32,12 @@ namespace MusicBeePlugin
         private Sender csSender = null;
         private IMediaChannel mediaChannel = null;
 
+        private Tuple<int, int> playerLengthWidth { get; set; }
 
         string mediaContentURL = null;
 
         const string contentType = "audio/mp3";
-        const string library = @"E:\Users\Troy\Music";
+        string library = null;
 
 
         public PluginInfo Initialise(IntPtr apiInterfacePtr)
@@ -51,10 +56,33 @@ namespace MusicBeePlugin
             about.MinInterfaceVersion = MinInterfaceVersion;
             about.MinApiRevision = MinApiRevision;
             about.ReceiveNotifications = (ReceiveNotificationFlags.PlayerEvents | ReceiveNotificationFlags.TagEvents);
-            about.ConfigurationPanelHeight = 0;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
+            about.ConfigurationPanelHeight = 100;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
+
+            mbApiInterface.MB_AddMenuItem("mnuTools/Chromecast Settings", "", ShowSettings);
+
+            ReadSettings();
 
 
             return about;
+        }
+
+        private void ShowSettings(object sender, EventArgs e)
+        {
+            using (var settingsForm = new Settings(mbApiInterface.Setting_GetPersistentStoragePath()))
+            {
+                settingsForm.ShowDialog();
+            }
+        }
+
+        private bool CheckPrerequisites()
+        {
+            //The csSender must not be null
+            //The server must be running
+            //The library path must be set 
+            var sender = csSender;
+            var webserv = mediaWebServer;
+            var lib = library;
+            return csSender != null && mediaWebServer != null && !string.IsNullOrEmpty(library);
         }
 
         public bool Configure(IntPtr panelHandle)
@@ -68,6 +96,22 @@ namespace MusicBeePlugin
             {
             }
             return false;
+        }
+
+        private void ReadSettings()
+        {
+            var fullFilePath = @mbApiInterface.Setting_GetPersistentStoragePath() + @"\MB_Chromecast_Settings.xml";
+            if (File.Exists(fullFilePath))
+            {
+                XmlDocument doc = new XmlDocument();
+                doc.Load(fullFilePath);
+                var temp = doc.GetElementsByTagName("server_port")[0].InnerText;
+                if (!string.IsNullOrEmpty(temp))
+                {
+                    WebserverPort = Convert.ToInt16(temp);
+                }
+                library = doc.GetElementsByTagName("library_path")[0].InnerText;
+            }
         }
 
         // called by MusicBee when the user clicks Apply or Save in the MusicBee Preferences screen.
@@ -89,12 +133,14 @@ namespace MusicBeePlugin
                 csSender.Disconnect();
             }
 
+            RevertSettings();
 
         }
 
         // uninstall this plugin - clean up any persisted files
         public void Uninstall()
         {
+
         }
 
         // receive event notifications from MusicBee
@@ -105,8 +151,7 @@ namespace MusicBeePlugin
             switch (type)
             {
                 case NotificationType.PlayStateChanged:
-                    Debug.WriteLine("PlaystateChanged");
-                    Debug.WriteLine(mbApiInterface.Player_GetPlayState());
+
                     if (csSender != null)
                     {
                         switch (mbApiInterface.Player_GetPlayState())
@@ -141,28 +186,14 @@ namespace MusicBeePlugin
 
                 case NotificationType.TrackChanged:
 
-                    if (mediaChannel == null || WebserverPort == null)
+                    if (!CheckPrerequisites())
                     {
                         break;
                     }
 
-                    mbApiInterface.Player_SetMute(true);
-
-                    string artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist);
-
-
-                    //const string mediaContentURL = "http://192.168.1.232:8080";
-                    // const string library = @"E:\Users\Troy\Music";
-
-
-                    string songName = @mbApiInterface.NowPlaying_GetFileUrl().Replace(library, "");
-                    songName = songName.Replace(@"\", @"/");
-                    songName = HttpUtility.UrlPathEncode(songName);
-                    string combined = mediaContentURL + songName;
-                    //Debug.WriteLine(combined);
-
-
-
+                    StringBuilder songName = new StringBuilder(@mbApiInterface.NowPlaying_GetFileUrl());
+                    songName.Replace(library, "");
+                    songName.Replace(@"\", @"/");
 
                     GenericMediaMetadata metadata = new GenericMediaMetadata
                     {
@@ -175,10 +206,9 @@ namespace MusicBeePlugin
                         var mediaStatus = mediaChannel.LoadAsync(
                             new MediaInformation()
                             {
-                                ContentId = combined,
+                                ContentId = mediaContentURL + HttpUtility.UrlPathEncode(songName.ToString()),
                                 StreamType = StreamType.Buffered,
-                                Metadata = metadata,
-
+                                Metadata = metadata
                             }).WaitAndUnwrapException();
 
 
@@ -226,12 +256,13 @@ namespace MusicBeePlugin
         //  to set a MusicBee header for the panel, set about.TargetApplication in the Initialise function above to the panel header text
         public int OnDockablePanelCreated(Control panel)
         {
+
+
             //    return the height of the panel and perform any initialisation here
             //    MusicBee will call panel.Dispose() when the user removes this panel from the layout configuration
             //    < 0 indicates to MusicBee this control is resizable and should be sized to fill the panel it is docked to in MusicBee
             //    = 0 indicates to MusicBee this control resizeable
             //    > 0 indicates to MusicBee the fixed height for the control.Note it is recommended you scale the height for high DPI screens(create a graphics object and get the DpiY value)
-
             panel.UIThread(() =>
             {
                 //Chromecast icon
@@ -243,7 +274,7 @@ namespace MusicBeePlugin
                     Image = Properties.Resources.chromecast_icon_connect
 
                 };
-                chromecastSelect.Click += new EventHandler(onChromecastSelection);
+                chromecastSelect.Click += new EventHandler(OnChromecastSelection);
                 panel.Controls.Add(chromecastSelect);
 
                 TrackbarEx trackbar = new TrackbarEx
@@ -270,28 +301,16 @@ namespace MusicBeePlugin
             return 0;
         }
 
-        // presence of this function indicates to MusicBee that the dockable panel created above will show menu items when the panel header is clicked
-        // return the list of ToolStripMenuItems that will be displayed
-        public List<ToolStripItem> GetHeaderMenuItems()
-        {
-            List<ToolStripItem> list = new List<ToolStripItem>();
-            list.Add(new ToolStripMenuItem("A menu item"));
-            return list;
-        }
-
-        private void panel_Paint(object sender, PaintEventArgs e)
-        {
-            e.Graphics.Clear(Color.Red);
-            //TextRenderer.DrawText(e.Graphics, "hello", SystemFonts.CaptionFont, new Point(10, 10), Color.Blue);
-        }
         #endregion
 
 
-        protected void onChromecastSelection(object sender, EventArgs e)
+        protected void OnChromecastSelection(object sender, EventArgs e)
         {
-            using (var cs = new ChromecastSelction())
+            using (var cs = new ChromecastPanel(
+                Color.FromArgb(mbApiInterface.Setting_GetSkinElementColour(SkinElement.SkinInputPanel, ElementState.ElementStateDefault, ElementComponent.ComponentBackground))))
             {
                 cs.StartPosition = FormStartPosition.CenterParent;
+
 
                 cs.ShowDialog();
 
@@ -301,14 +320,31 @@ namespace MusicBeePlugin
                 {
                     return;
                 }
-                if (StartWebserver() == -1)
+                if (StartWebserver() != -1)
                 {
-                    //Error here
+                    //Success
+                    ChangeSettings();
+
+
+                }
+                else
+                {
+                    //Error
                 }
 
             }
 
         }
+
+        private IEnumerable<Component> EnumerateComponents()
+        {
+            return from field in GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                   where typeof(Component).IsAssignableFrom(field.FieldType)
+                   let component = (Component)field.GetValue(this)
+                   where component != null
+                   select component;
+        }
+
 
         private async void trackbar1_ValueChanged(object sender, EventArgs e)
         {
@@ -328,7 +364,25 @@ namespace MusicBeePlugin
             }
         }
 
+        private void ChangeSettings()
+        {
+            //TODO: maybe create an array, initialized on startup, then just flip each bool value
 
+            //Settings need to be changed because they might change how the player interacts with chromecast.
+            //These settings get reverted back to their original settings after
+            mbApiInterface.Player_SetMute(true);
+            mbApiInterface.Player_SetCrossfade(false);
+
+
+        }
+
+        private void RevertSettings()
+        {
+            if (mbApiInterface.Player_GetMute())
+            {
+                mbApiInterface.Player_SetMute(false);
+            }
+        }
 
         private int StartWebserver()
         {
@@ -340,8 +394,7 @@ namespace MusicBeePlugin
             {
 
 
-                var webServer_temp = new WebServer(library, Path.GetDirectoryName(mbApiInterface.NowPlaying_GetArtworkUrl()));
-                mediaWebServer = (webServer_temp.MediaWebServer as WebServer);
+                mediaWebServer = new WebServer(library, Path.GetDirectoryName(mbApiInterface.NowPlaying_GetArtworkUrl()));
                 mediaContentURL = "http://" + GetLocalIPAddress() + ":" + WebserverPort;
 
                 return 0;

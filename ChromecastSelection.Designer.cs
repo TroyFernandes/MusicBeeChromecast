@@ -1,6 +1,6 @@
 ﻿namespace MusicBeePlugin
 {
-    partial class ChromecastSelction
+    partial class ChromecastSelection
     {
         /// <summary>
         /// Required designer variable.
@@ -39,14 +39,14 @@
             this.flowLayoutPanel1.TabIndex = 1;
             this.flowLayoutPanel1.Paint += new System.Windows.Forms.PaintEventHandler(this.flowLayoutPanel1_Paint);
             // 
-            // ChromecastSelction
+            // ChromecastSelection
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoValidate = System.Windows.Forms.AutoValidate.EnableAllowFocusChange;
             this.ClientSize = new System.Drawing.Size(206, 301);
             this.Controls.Add(this.flowLayoutPanel1);
-            this.Name = "ChromecastSelction";
+            this.Name = "ChromecastSelection";
             this.Text = "Devices";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ChromecastSelection_FormClosing);
             this.Load += new System.EventHandler(this.ChromecastSelection_Load);

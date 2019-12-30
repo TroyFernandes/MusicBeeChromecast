@@ -14,7 +14,7 @@ using MaterialSkin.Controls;
 
 namespace MusicBeePlugin
 {
-    public partial class ChromecastSelction : MaterialForm
+    public partial class ChromecastSelection : MaterialForm
     {
 
         public IMediaChannel ChromecastMediaChannel { get; set; } = null;
@@ -22,7 +22,7 @@ namespace MusicBeePlugin
 
         private readonly MaterialSkinManager materialSkinManager;
 
-        public ChromecastSelction()
+        public ChromecastSelection()
         {
             InitializeComponent();
 
