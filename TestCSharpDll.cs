@@ -32,7 +32,6 @@ namespace MusicBeePlugin
         private Sender csSender = null;
         private IMediaChannel mediaChannel = null;
 
-        private Tuple<int, int> playerLengthWidth { get; set; }
 
         string mediaContentURL = null;
 
@@ -74,14 +73,35 @@ namespace MusicBeePlugin
             }
         }
 
+        private void SynchronizeListener(object sender, EventArgs e)
+        {
+            var obj = (sender as IMediaChannel).Status.First();
+            var chromecastTime = obj.CurrentTime;
+            var playerState = obj.PlayerState;
+
+            //Reflect changes made in the songs timeline to the musicbee player
+            mbApiInterface.Player_SetPosition((int)(chromecastTime * 1000));
+
+            var musicbeePlayerState = mbApiInterface.Player_GetPlayState();
+
+            //Reflect the changes in the play state on the chromecast to the musicbee player
+            if (playerState == "PAUSED" && musicbeePlayerState == PlayState.Playing)
+            {
+                mbApiInterface.Player_PlayPause();
+            }
+            if (playerState == "PLAYING" && musicbeePlayerState == PlayState.Paused)
+            {
+                mbApiInterface.Player_PlayPause();
+            }
+
+
+        }
+
         private bool CheckPrerequisites()
         {
             //The csSender must not be null
             //The server must be running
             //The library path must be set 
-            var sender = csSender;
-            var webserv = mediaWebServer;
-            var lib = library;
             return csSender != null && mediaWebServer != null && !string.IsNullOrEmpty(library);
         }
 
@@ -186,11 +206,14 @@ namespace MusicBeePlugin
 
                 case NotificationType.TrackChanged:
 
+
                     if (!CheckPrerequisites())
                     {
                         break;
                     }
 
+                    //csSender.GetChannel<IReceiverChannel>().StatusChanged += SynchronizeListener;
+                    csSender.GetChannel<IMediaChannel>().StatusChanged += SynchronizeListener;
                     StringBuilder songName = new StringBuilder(@mbApiInterface.NowPlaying_GetFileUrl());
                     songName.Replace(library, "");
                     songName.Replace(@"\", @"/");
@@ -208,7 +231,8 @@ namespace MusicBeePlugin
                             {
                                 ContentId = mediaContentURL + HttpUtility.UrlPathEncode(songName.ToString()),
                                 StreamType = StreamType.Buffered,
-                                Metadata = metadata
+                                Metadata = metadata,
+
                             }).WaitAndUnwrapException();
 
 
@@ -469,8 +493,6 @@ namespace MusicBeePlugin
             base.OnGotFocus(e);
             SendMessage(this.Handle, 0x0128, MakeParam(1, 0x1), 0);
         }
-
-
 
     }
 
