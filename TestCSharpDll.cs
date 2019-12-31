@@ -18,6 +18,7 @@ using System.Reflection;
 using System.Linq;
 using System.Xml;
 using Microsoft.Owin.Host.HttpListener;
+using System.Threading.Tasks;
 
 namespace MusicBeePlugin
 {
@@ -82,13 +83,15 @@ namespace MusicBeePlugin
         //Synchronize changes made directly to the chromecast (i.e by some other remote) to the musicbee player
         private void Synchronize_Reciever(object sender, EventArgs e)
         {
-            var obj = (sender as IMediaChannel).Status.First();
+
+            var obj = (sender as IMediaChannel).Status;
             if (obj == null)
             {
                 return;
             }
-            var chromecastTime = obj.CurrentTime;
-            var playerState = obj.PlayerState;
+
+            var chromecastTime = obj.First().CurrentTime;
+            var playerState = obj.First().PlayerState;
 
             //Reflect changes made in the songs timeline to the musicbee player
             mbApiInterface.Player_SetPosition((int)(chromecastTime * 1000));
@@ -264,8 +267,7 @@ namespace MusicBeePlugin
 
                     try
                     {
-
-                        var mediaStatus = mediaChannel.LoadAsync(
+                        Task.Run(() => mediaChannel.LoadAsync(
                             new MediaInformation()
                             {
                                 ContentId = mediaContentURL + HttpUtility.UrlPathEncode(songName.ToString()), //Where the media is located
@@ -275,8 +277,7 @@ namespace MusicBeePlugin
                                     Subtitle = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist), //Shows the Artist
                                     Title = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle), //Shows the Track Title
                                 }
-                            }).WaitAndUnwrapException();
-
+                            }));
 
                     }
                     catch (Exception e)

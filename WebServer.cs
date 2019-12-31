@@ -68,7 +68,6 @@ namespace MusicBeePlugin
                 MediaWebServer = WebApp.Start(mediaURL, builder => builder.UseFileServer(mediaServerOptions));
 
                 Debug.WriteLine("Listening at " + mediaURL);
-                MessageBox.Show("Listening at " + mediaURL);
 
             }
             catch (Exception e)
