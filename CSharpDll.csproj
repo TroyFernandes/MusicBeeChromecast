@@ -279,6 +279,24 @@
   <ItemGroup>
     <None Include="Resources\play.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\connected_icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\library_icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\server_icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\connect_icon_OK.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\library_icon_OK.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\server_icon_OK.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>mt.exe -manifest app.manifest -outputresource:mb_TestCSharpDll.dll;#2

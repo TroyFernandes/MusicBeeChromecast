@@ -43,7 +43,10 @@ namespace MusicBeePlugin
             t.SetApartmentState(ApartmentState.STA);
             t.Start();
             t.Join();
-            directoryLabel.Text = selectedPath;
+            if (string.IsNullOrEmpty(directoryLabel.Text))
+            {
+                directoryLabel.Text = selectedPath;
+            }
         }
 
 
@@ -58,7 +61,6 @@ namespace MusicBeePlugin
                 //Write sub-elements
                 writer.WriteElementString("server_port", ((int)serverPortSelect.Value).ToString());
                 writer.WriteElementString("library_path", directoryLabel.Text);
-
 
                 // end the root element
                 writer.WriteEndElement();

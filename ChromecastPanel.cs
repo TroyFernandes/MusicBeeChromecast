@@ -17,6 +17,7 @@ namespace MusicBeePlugin
         private Color backgroundColor { get; set; }
         public IMediaChannel ChromecastMediaChannel { get; set; } = null;
         public Sender ChromecastSender { get; set; } = null;
+        public bool Disconnect { get; set; } = false;
 
         public ChromecastPanel(Color color)
         {
@@ -27,11 +28,11 @@ namespace MusicBeePlugin
         private async void ChromecastPanel_Load(object sender, EventArgs e)
         {
 
-
             var contrastColor = ContrastColor(backgroundColor);
             this.BackColor = backgroundColor;
             this.closeText.ForeColor = contrastColor;
             this.devicesText.ForeColor = contrastColor;
+
 
             IEnumerable<IReceiver> receiver = await new DeviceLocator().FindReceiversAsync();
 
@@ -40,7 +41,7 @@ namespace MusicBeePlugin
                 Button b = new Button
                 {
                     BackColor = Color.Transparent,
-                    ForeColor = Color.Transparent,
+                    ForeColor = ContrastColor(backgroundColor),
                     FlatStyle = FlatStyle.Flat,
                     Text = x.FriendlyName,
                     AutoSize = false,
