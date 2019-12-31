@@ -3,8 +3,10 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using System.Windows;
 using Microsoft.Owin;
 using Microsoft.Owin.FileSystems;
+using Microsoft.Owin.Host.HttpListener;
 using Microsoft.Owin.Hosting;
 using Microsoft.Owin.StaticFiles;
 using Microsoft.Owin.StaticFiles.ContentTypes;
@@ -20,7 +22,7 @@ namespace MusicBeePlugin
 
         private static readonly IPEndPoint DefaultLoopbackEndpoint = new IPEndPoint(IPAddress.Loopback, port: 0);
 
-        public const int MEDIA_PORT = 23614;
+        public int? MEDIA_PORT { get; set; }
 
         protected virtual void Dispose(bool disposing)
         {
@@ -46,10 +48,13 @@ namespace MusicBeePlugin
             GC.SuppressFinalize(this);
         }
 
-        public WebServer(string @musicDirectory, string @imageDirectory = null)
+        public WebServer(string @musicDirectory, int? port_number, string @imageDirectory = null)
         {
+
             try
             {
+                MEDIA_PORT = port_number ?? throw new Exception("Port Number Undefined");
+
                 var mediaURL = "http://*:" + MEDIA_PORT;
                 var mediaRoot = musicDirectory;
                 var mediaFileSystem = new PhysicalFileSystem(mediaRoot);
@@ -63,11 +68,13 @@ namespace MusicBeePlugin
                 MediaWebServer = WebApp.Start(mediaURL, builder => builder.UseFileServer(mediaServerOptions));
 
                 Debug.WriteLine("Listening at " + mediaURL);
-
+                MessageBox.Show("Listening at " + mediaURL);
 
             }
             catch (Exception e)
             {
+                MessageBox.Show(e.Message);
+
                 //Change this after
                 throw new Exception("Webserver exception");
             }

@@ -17,12 +17,13 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Linq;
 using System.Xml;
+using Microsoft.Owin.Host.HttpListener;
 
 namespace MusicBeePlugin
 {
     public partial class Plugin
     {
-        private int? WebserverPort = 23614;
+        private int? WebserverPort;
         private WebServer mediaWebServer;
         private MusicBeeApiInterface mbApiInterface;
         private PluginInfo about = new PluginInfo();
@@ -31,6 +32,8 @@ namespace MusicBeePlugin
         private IMediaChannel mediaChannel = null;
 
         private PictureBox serverIcon, libraryIcon, connectionIcon;
+
+        private bool crossfade;
 
 
         string mediaContentURL = null;
@@ -80,6 +83,10 @@ namespace MusicBeePlugin
         private void Synchronize_Reciever(object sender, EventArgs e)
         {
             var obj = (sender as IMediaChannel).Status.First();
+            if (obj == null)
+            {
+                return;
+            }
             var chromecastTime = obj.CurrentTime;
             var playerState = obj.PlayerState;
 
@@ -186,6 +193,7 @@ namespace MusicBeePlugin
         public void SaveSettings()
         {
             string dataPath = mbApiInterface.Setting_GetPersistentStoragePath();
+            ReadSettings();
         }
 
         // MusicBee is closing the plugin (plugin is being disabled by user or MusicBee is shutting down)
@@ -378,12 +386,24 @@ namespace MusicBeePlugin
 
         protected void OnChromecastSelection(object sender, EventArgs e)
         {
+            //If the webserver started with no issues
+            try
+            {
+                StartWebserver();
+                //Change some musicbee settings
+                ChangeSettings();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("The webserver could not be started. Cancelling");
+                return;
+            }
+
+
             using (var cs = new ChromecastPanel(
                 Color.FromArgb(mbApiInterface.Setting_GetSkinElementColour(SkinElement.SkinInputPanel, ElementState.ElementStateDefault, ElementComponent.ComponentBackground))))
             {
                 cs.StartPosition = FormStartPosition.CenterParent;
-
-
                 cs.ShowDialog();
 
                 mediaChannel = cs.ChromecastMediaChannel;
@@ -392,20 +412,12 @@ namespace MusicBeePlugin
                 {
                     return;
                 }
-                if (StartWebserver() != -1)
-                {
-                    //Success
-                    ChangeSettings();
 
-                    UpdateStatus();
-
-                }
-                else
-                {
-                    //Error
-                }
+                //Maybe move this somewhere else
+                csSender.GetChannel<IMediaChannel>().StatusChanged += Synchronize_Reciever;
 
             }
+            UpdateStatus();
 
         }
 
@@ -439,8 +451,8 @@ namespace MusicBeePlugin
 
         private void ChangeSettings()
         {
-            //Maybe move this somewhere else
-            csSender.GetChannel<IMediaChannel>().StatusChanged += Synchronize_Reciever;
+            //Save the users settings
+            crossfade = mbApiInterface.Player_GetCrossfade();
 
             //TODO: maybe create an array, initialized on startup, then just flip each bool value
 
@@ -458,20 +470,22 @@ namespace MusicBeePlugin
             {
                 mbApiInterface.Player_SetMute(false);
             }
+            mbApiInterface.Player_SetCrossfade(crossfade);
         }
 
         private int StartWebserver()
         {
+            //If theres a web server already running, then theres no need to start a new one
             if (mediaWebServer != null)
             {
                 return 1;
             }
             try
             {
-
-                mediaWebServer = new WebServer(library, Path.GetDirectoryName(mbApiInterface.NowPlaying_GetArtworkUrl()));
+                //Create the web server
+                mediaWebServer = new WebServer(library, WebserverPort);
+                //Save the web server url
                 mediaContentURL = "http://" + GetLocalIPAddress() + ":" + WebserverPort;
-
                 return 0;
             }
             catch (Exception e)
@@ -488,9 +502,9 @@ namespace MusicBeePlugin
             {
                 mediaWebServer.Stop();
             }
-            catch (Exception e)
+            catch (NullReferenceException e)
             {
-                //TODO
+                //Nothing to do since there was no web server initialized in the first place
             }
         }
 

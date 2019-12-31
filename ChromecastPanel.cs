@@ -117,5 +117,7 @@ namespace MusicBeePlugin
             this.FormClosing -= ChromecastSelection_FormClosing;
             this.Close();
         }
+
+
     }
 }

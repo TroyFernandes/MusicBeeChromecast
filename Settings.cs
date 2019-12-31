@@ -43,7 +43,7 @@ namespace MusicBeePlugin
             t.SetApartmentState(ApartmentState.STA);
             t.Start();
             t.Join();
-            if (string.IsNullOrEmpty(directoryLabel.Text))
+            if (string.IsNullOrEmpty(directoryLabel.Text) || directoryLabel.Text == "Not Set")
             {
                 directoryLabel.Text = selectedPath;
             }
@@ -91,6 +91,7 @@ namespace MusicBeePlugin
         private void saveText_Click(object sender, EventArgs e)
         {
             CreateSettings();
+            this.Close();
         }
     }
 }
