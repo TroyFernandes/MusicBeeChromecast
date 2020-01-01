@@ -92,9 +92,6 @@
     <Reference Include="Google.ProtocolBuffers.Serialization">
       <HintPath>..\SharpCast-master\SharpCast\bin\Release\Google.ProtocolBuffers.Serialization.dll</HintPath>
     </Reference>
-    <Reference Include="GoogleCast, Version=1.6.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\GoogleCast.1.6.7\lib\netstandard2.0\GoogleCast.dll</HintPath>
-    </Reference>
     <Reference Include="MaterialSkin">
       <HintPath>F:\Users\Troy\Downloads\MaterialSkin.dll</HintPath>
     </Reference>
@@ -292,6 +289,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\server_icon_OK.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="F:\Users\Troy\Downloads\GoogleCast-master\GoogleCast\GoogleCast.csproj">
+      <Project>{17514b85-d288-47ca-b07e-a4c0e7eae196}</Project>
+      <Name>GoogleCast</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

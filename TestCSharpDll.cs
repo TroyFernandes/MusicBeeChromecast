@@ -33,7 +33,7 @@ namespace MusicBeePlugin
         #region GoogleCast Chromecast Variables
         private Sender csSender = null;
         private IMediaChannel mediaChannel = null;
-        const string contentType = "audio/mp3";
+        const string contentType = "audio/flac";
         #endregion GoogleCast Chromecast Variables
 
         #region Musicbee API Variables
@@ -68,7 +68,9 @@ namespace MusicBeePlugin
             about.ConfigurationPanelHeight = 25;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
 
             ToolStripMenuItem mainMenuItem = (ToolStripMenuItem)mbApiInterface.MB_AddMenuItem("mnuTools/MB Chromecast", null, null);
+
             //TODO
+            mainMenuItem.DropDown.Items.Add("Disconnect", null, null);
             mainMenuItem.DropDown.Items.Add("Restart Server", null, null);
             mainMenuItem.DropDown.Items.Add("Stop Plugin", null, null);
 
@@ -103,14 +105,17 @@ namespace MusicBeePlugin
         // MusicBee is closing the plugin (plugin is being disabled by user or MusicBee is shutting down)
         public void Close(PluginCloseReason reason)
         {
+            PauseIfPlaying();
+
             StopWebserver();
 
             //Disconnect here maybe?
-            if (csSender != null)
+            if (csSender != null && csSender.TcpClient != null)
             {
                 csSender.Disconnect();
             }
 
+            UpdateStatus();
             RevertSettings();
 
         }
@@ -171,20 +176,24 @@ namespace MusicBeePlugin
                         Task.Run(() => mediaChannel.LoadAsync(
                             new MediaInformation()
                             {
+                                ContentType = contentType,
                                 ContentId = mediaContentURL + HttpUtility.UrlPathEncode(songName.ToString()), //Where the media is located
                                 StreamType = StreamType.Buffered,
-                                Metadata = new GenericMediaMetadata
+                                Metadata = new MusicTrackMediaMetadata
                                 {
-                                    Subtitle = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist), //Shows the Artist
+                                    Artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist), //Shows the Artist
                                     Title = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle), //Shows the Track Title
-                                }
-                            }));
+                                    AlbumName = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album),
+                                },
 
+
+                            }));
                     }
                     catch (Exception e)
                     {
                         Debug.WriteLine(e.Message);
                     }
+
 
 
                     break;
@@ -352,8 +361,11 @@ namespace MusicBeePlugin
                     return;
                 }
 
+                PauseIfPlaying();
+
                 //Maybe move this somewhere else?
                 csSender.GetChannel<IMediaChannel>().StatusChanged += Synchronize_Reciever;
+                csSender.Disconnected += ChromecastDisconnect;
 
             }
             UpdateStatus();
@@ -387,6 +399,12 @@ namespace MusicBeePlugin
             {
                 mbApiInterface.Player_PlayPause();
             }
+        }
+        public void ChromecastDisconnect(object sender, EventArgs e)
+        {
+            //Debug.WriteLine("Disconnected");
+            //Close(PluginCloseReason.StopNoUnload);
+            //UpdateStatus();
         }
 
         #endregion Core Methods
@@ -456,7 +474,7 @@ namespace MusicBeePlugin
 
         private void UpdateStatus()
         {
-            if (csSender != null)
+            if (csSender != null && (csSender as Sender).TcpClient != null)
             {
                 connectionIcon.Image = Properties.Resources.connect_icon_OK;
             }
@@ -513,6 +531,36 @@ namespace MusicBeePlugin
         }
 
         #endregion Helper Functions
+
+        public void Disconnect(object sender, EventArgs e)
+        {
+            try
+            {
+                PauseIfPlaying();
+
+                //csSender.GetChannel<IReceiverChannel>().StopAsync().WaitWithoutException();
+                csSender.Disconnect();
+                UpdateStatus();
+            }
+            catch (NullReferenceException ex)
+            {
+                Debug.WriteLine("");
+            }
+        }
+
+
+        public void UserClosingPlugin(object sender, EventArgs e)
+        {
+            Close(PluginCloseReason.UserDisabled);
+        }
+
+        public void PauseIfPlaying()
+        {
+            if (mbApiInterface.Player_GetPlayState() == PlayState.Playing)
+            {
+                mbApiInterface.Player_PlayPause();
+            }
+        }
 
 
     }
