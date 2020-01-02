@@ -45,6 +45,7 @@ namespace MusicBeePlugin
         private PictureBox serverIcon, libraryIcon, connectionIcon;
         private bool crossfade;
         string library = null;
+        private TrackbarEx trackbar = null;
         #endregion Misc Variables
 
         #region Musicbee API Methods
@@ -70,9 +71,10 @@ namespace MusicBeePlugin
             ToolStripMenuItem mainMenuItem = (ToolStripMenuItem)mbApiInterface.MB_AddMenuItem("mnuTools/MB Chromecast", null, null);
 
             //TODO
-            mainMenuItem.DropDown.Items.Add("Disconnect", null, null);
+            mainMenuItem.DropDown.Items.Add("Disconnect from Chromecast", null, (sender, e) => DisconnectFromChromecast(sender, e, false));
+            mainMenuItem.DropDown.Items.Add("Stop Server", null, StopWebserver);
             mainMenuItem.DropDown.Items.Add("Restart Server", null, null);
-            mainMenuItem.DropDown.Items.Add("Stop Plugin", null, null);
+            mainMenuItem.DropDown.Items.Add("Stop Plugin", null, UserClosingPlugin);
 
             ReadSettings();
 
@@ -109,10 +111,11 @@ namespace MusicBeePlugin
 
             StopWebserver();
 
-            //Disconnect here maybe?
+            //DisconnectFromChromecast here maybe?
             if (csSender != null && csSender.TcpClient != null)
             {
                 csSender.Disconnect();
+                csSender = null;
             }
 
             UpdateStatus();
@@ -161,7 +164,7 @@ namespace MusicBeePlugin
 
                     if (!PrerequisitesMet())
                     {
-                        break;
+                        return;
                     }
 
 
@@ -287,7 +290,7 @@ namespace MusicBeePlugin
                 };
                 panel.Controls.Add(connectionIcon);
 
-                TrackbarEx trackbar = new TrackbarEx
+                trackbar = new TrackbarEx
                 {
 
                     Capture = true,
@@ -319,7 +322,7 @@ namespace MusicBeePlugin
                 try
                 {
 
-                    await csSender.GetChannel<IReceiverChannel>().SetVolumeAsync((float)(sender as TrackbarEx).Value / 100);
+                    //await csSender.GetChannel<IReceiverChannel>().SetVolumeAsync((float)(sender as TrackbarEx).Value / 100);
 
                 }
                 catch (Exception e2)
@@ -365,11 +368,25 @@ namespace MusicBeePlugin
 
                 //Maybe move this somewhere else?
                 csSender.GetChannel<IMediaChannel>().StatusChanged += Synchronize_Reciever;
+                csSender.GetChannel<IReceiverChannel>().StatusChanged += Synchronize_Player;
                 csSender.Disconnected += ChromecastDisconnect;
 
             }
             UpdateStatus();
 
+        }
+
+        private void Synchronize_Player(object sender, EventArgs e)
+        {
+            //var x = csSender.GetChannel<IReceiverChannel>().Status.Volume;
+            //var level = (csSender.GetChannel<IReceiverChannel>().Status.Volume.Level * 100);
+            //trackbar.UIThread(() =>
+            //{
+            //    trackbar.Value = (int)level;
+            //});
+
+
+            //Debug.WriteLine("CHROMECAST=VOLUME: " + level);
         }
 
         //Synchronize changes made directly to the chromecast (i.e by some other remote) to the musicbee player
@@ -402,9 +419,13 @@ namespace MusicBeePlugin
         }
         public void ChromecastDisconnect(object sender, EventArgs e)
         {
-            //Debug.WriteLine("Disconnected");
-            //Close(PluginCloseReason.StopNoUnload);
-            //UpdateStatus();
+            Debug.WriteLine("Disconnected from chromecast");
+            StopIfPlaying();
+            csSender.Disconnect();
+            StopWebserver();
+            UpdateStatus();
+            RevertSettings();
+            MessageBox.Show("Chromecast was Disconnected, Closing all resources");
         }
 
         #endregion Core Methods
@@ -433,13 +454,16 @@ namespace MusicBeePlugin
 
         }
 
-        private void StopWebserver()
+        private void StopWebserver(object sender = null, EventArgs e = null)
         {
             try
             {
                 mediaWebServer.Stop();
+                mediaWebServer = null;
+                UpdateStatus();
+                MessageBox.Show("Stopped web server successfully");
             }
-            catch (NullReferenceException e)
+            catch (NullReferenceException ex)
             {
                 //Nothing to do since there was no web server initialized in the first place
             }
@@ -532,21 +556,23 @@ namespace MusicBeePlugin
 
         #endregion Helper Functions
 
-        public void Disconnect(object sender, EventArgs e)
+        public void DisconnectFromChromecast(object sender, EventArgs e, bool userCalled)
         {
             try
             {
                 PauseIfPlaying();
-
                 //csSender.GetChannel<IReceiverChannel>().StopAsync().WaitWithoutException();
                 csSender.Disconnect();
+                csSender = null;
                 UpdateStatus();
             }
             catch (NullReferenceException ex)
             {
                 Debug.WriteLine("");
             }
+
         }
+
 
 
         public void UserClosingPlugin(object sender, EventArgs e)
@@ -561,6 +587,17 @@ namespace MusicBeePlugin
                 mbApiInterface.Player_PlayPause();
             }
         }
+        public void StopIfPlaying()
+        {
+            if (mbApiInterface.Player_GetPlayState() == PlayState.Playing)
+            {
+                mbApiInterface.Player_Stop();
+            }
+        }
+
+
+
+
 
 
     }
