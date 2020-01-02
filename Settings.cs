@@ -27,7 +27,7 @@ namespace MusicBeePlugin
         private void libraryPathButton_Click(object sender, EventArgs e)
         {
             string selectedPath = null;
-            var t = new Thread((ThreadStart)(() =>
+            var t = new Thread(() =>
             {
                 FolderBrowserDialog fbd = new FolderBrowserDialog
                 {
@@ -38,15 +38,14 @@ namespace MusicBeePlugin
                     return;
 
                 selectedPath = fbd.SelectedPath;
-            }));
+            });
 
             t.SetApartmentState(ApartmentState.STA);
             t.Start();
             t.Join();
-            if (string.IsNullOrEmpty(directoryLabel.Text) || directoryLabel.Text == "Not Set")
-            {
-                directoryLabel.Text = selectedPath;
-            }
+
+            directoryLabel.Text = selectedPath;
+
         }
 
 
@@ -93,5 +92,8 @@ namespace MusicBeePlugin
             CreateSettings();
             this.Close();
         }
+
+
     }
+
 }

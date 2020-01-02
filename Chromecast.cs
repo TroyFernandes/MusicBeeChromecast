@@ -260,6 +260,13 @@ namespace MusicBeePlugin
             //If the webserver started with no issues
             try
             {
+                //If there's already an active connection
+                if (csSender != null)
+                {
+                    MessageBox.Show("There is already an active connection to a device. Please Disconnect then try again");
+                    return;
+                }
+                //If the webserver started with an issue 
                 if (StartWebserver() == -1)
                 {
                     return;
@@ -270,7 +277,7 @@ namespace MusicBeePlugin
             }
             catch (Exception ex)
             {
-                MessageBox.Show("The webserver could not be started. Cancelling");
+                MessageBox.Show("The webserver could not be started. Cancelling\n Error: " + ex.Message);
                 return;
             }
 
@@ -287,6 +294,7 @@ namespace MusicBeePlugin
                     csSender = cs.ChromecastSender;
                     if (csSender == null)
                     {
+                        RevertSettings();
                         return;
                     }
 
@@ -360,7 +368,7 @@ namespace MusicBeePlugin
                 //Create the web server
                 mediaWebServer = new WebServer(library, WebserverPort);
                 //Save the web server url
-                mediaContentURL = "http://" + GetLocalIPAddress() + ":" + WebserverPort;
+                mediaContentURL = "http://" + GetLocalIPAddress() + ":" + WebserverPort + "/";
                 return 0;
             }
             catch (Exception e)
