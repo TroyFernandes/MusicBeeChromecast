@@ -6,18 +6,13 @@ using GoogleCast;
 using Nito.AsyncEx.Synchronous;
 using GoogleCast.Channels;
 using GoogleCast.Models.Media;
-using System.Collections;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Web;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.ComponentModel;
-using System.Reflection;
 using System.Linq;
 using System.Xml;
-using Microsoft.Owin.Host.HttpListener;
 using System.Threading.Tasks;
 
 namespace MusicBeePlugin
@@ -78,6 +73,9 @@ namespace MusicBeePlugin
             mainMenuItem.DropDown.Items.Add("Restart Server", null, null);
             mainMenuItem.DropDown.Items.Add("Stop Plugin", null, UserClosingPlugin);
 
+            //Save the crossfade settings
+            crossfade = mbApiInterface.Player_GetCrossfade();
+
             ReadSettings();
 
 
@@ -110,18 +108,20 @@ namespace MusicBeePlugin
         public void Close(PluginCloseReason reason)
         {
             PauseIfPlaying();
+            RevertSettings();
 
             StopWebserver();
 
-            //DisconnectFromChromecast here maybe?
             if (csSender != null && csSender.TcpClient != null)
             {
+                PauseIfPlaying();
                 csSender.Disconnect();
                 csSender = null;
+
             }
 
             UpdateStatus();
-            RevertSettings();
+
 
         }
 
@@ -173,29 +173,37 @@ namespace MusicBeePlugin
                     }
 
 
-                    //Get the songname and format it into half of the url
-                    StringBuilder songName = new StringBuilder(@mbApiInterface.NowPlaying_GetFileUrl());
-                    songName.Replace(library, "");
-                    songName.Replace(@"\", @"/");
-
-
                     try
                     {
-                        Task.Run(() => mediaChannel.LoadAsync(
-                            new MediaInformation()
-                            {
-                                ContentType = contentType,
-                                ContentId = mediaContentURL + HttpUtility.UrlPathEncode(songName.ToString()), //Where the media is located
-                                StreamType = StreamType.Buffered,
-                                Metadata = new MusicTrackMediaMetadata
+                        Task.Run(() =>
+                        {
+                            //Get the songname and format it into half of the url
+                            StringBuilder songName = new StringBuilder(@mbApiInterface.NowPlaying_GetFileUrl());
+                            songName.Replace(library, "");
+                            songName.Replace(@"\", @"/");
+
+                            mediaChannel.LoadAsync(
+                                new MediaInformation()
                                 {
-                                    Artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist), //Shows the Artist
-                                    Title = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle), //Shows the Track Title
-                                    AlbumName = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album),
-                                },
+                                    ContentType = contentType,
+                                    ContentId = mediaContentURL + HttpUtility.UrlPathEncode(songName.ToString()), //Where the media is located
+                                    StreamType = StreamType.Buffered,
+                                    Metadata = new MusicTrackMediaMetadata
+                                    {
+                                        Artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist), //Shows the Artist
+                                        Title = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle), //Shows the Track Title
+                                        AlbumName = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album),
+                                    },
 
 
-                            }));
+                                });
+
+
+
+                        });
+
+
+
                     }
                     catch (Exception e)
                     {
@@ -303,6 +311,7 @@ namespace MusicBeePlugin
             });
 
 
+
             return 0;
         }
 
@@ -320,7 +329,11 @@ namespace MusicBeePlugin
             //If the webserver started with no issues
             try
             {
-                StartWebserver();
+                if (StartWebserver() == -1)
+                {
+                    return;
+                }
+
                 //Change some musicbee settings
                 ChangeSettings();
             }
@@ -334,23 +347,31 @@ namespace MusicBeePlugin
             using (var cs = new ChromecastPanel(
                 Color.FromArgb(mbApiInterface.Setting_GetSkinElementColour(SkinElement.SkinInputPanel, ElementState.ElementStateDefault, ElementComponent.ComponentBackground))))
             {
-                cs.StartPosition = FormStartPosition.CenterParent;
-                cs.ShowDialog();
-
-                mediaChannel = cs.ChromecastMediaChannel;
-                csSender = cs.ChromecastSender;
-                if (csSender == null)
+                try
                 {
-                    return;
+                    cs.StartPosition = FormStartPosition.CenterParent;
+                    cs.ShowDialog();
+
+                    mediaChannel = cs.ChromecastMediaChannel;
+                    csSender = cs.ChromecastSender;
+                    if (csSender == null)
+                    {
+                        return;
+                    }
+
+                    PauseIfPlaying();
+
+                    //Maybe move this somewhere else?
+                    csSender.GetChannel<IMediaChannel>().StatusChanged += Synchronize_Reciever;
+                    csSender.Disconnected += ChromecastDisconnect;
+                }
+                catch (NullReferenceException ex)
+                {
+                    MessageBox.Show(ex.Message);
                 }
 
-                PauseIfPlaying();
-
-                //Maybe move this somewhere else?
-                csSender.GetChannel<IMediaChannel>().StatusChanged += Synchronize_Reciever;
-                csSender.Disconnected += ChromecastDisconnect;
-
             }
+
             UpdateStatus();
 
         }
@@ -393,7 +414,7 @@ namespace MusicBeePlugin
             StopWebserver();
             UpdateStatus();
             RevertSettings();
-            MessageBox.Show("Chromecast was Disconnected, Closing all resources");
+            //MessageBox.Show("Chromecast was Disconnected, Closing all resources");
         }
 
         #endregion Core Methods
@@ -429,7 +450,7 @@ namespace MusicBeePlugin
                 mediaWebServer.Stop();
                 mediaWebServer = null;
                 UpdateStatus();
-                MessageBox.Show("Stopped web server successfully");
+                //MessageBox.Show("Stopped web server successfully");
             }
             catch (NullReferenceException ex)
             {
@@ -442,8 +463,6 @@ namespace MusicBeePlugin
         #region MB Settings
         private void ChangeSettings()
         {
-            //Save the users settings
-            crossfade = mbApiInterface.Player_GetCrossfade();
 
             //TODO: maybe create an array, initialized on startup, then just flip each bool value
 
@@ -466,34 +485,36 @@ namespace MusicBeePlugin
 
         private void UpdateStatus()
         {
-            if (csSender != null && (csSender as Sender).TcpClient != null)
-            {
-                connectionIcon.Image = Properties.Resources.connect_icon_OK;
-            }
-            else
-            {
-                connectionIcon.Image = Properties.Resources.connected_icon;
 
-            }
+            //if (csSender != null && (csSender as Sender)?.TcpClient != null)
+            //{
+            //    connectionIcon.Image = Properties.Resources.connect_icon_OK;
+            //}
+            //else
+            //{
+            //    connectionIcon.Image = Properties.Resources.connected_icon;
 
-            if (library != null)
-            {
-                libraryIcon.Image = Properties.Resources.library_icon_OK;
-            }
-            else
-            {
-                libraryIcon.Image = Properties.Resources.library_icon;
+            //}
 
-            }
+            //if (library != null)
+            //{
+            //    libraryIcon.Image = Properties.Resources.library_icon_OK;
+            //}
+            //else
+            //{
+            //    libraryIcon.Image = Properties.Resources.library_icon;
 
-            if (mediaWebServer != null)
-            {
-                serverIcon.Image = Properties.Resources.server_icon_OK;
-            }
-            else
-            {
-                serverIcon.Image = Properties.Resources.server_icon;
-            }
+            //}
+
+            //if (mediaWebServer != null)
+            //{
+            //    serverIcon.Image = Properties.Resources.server_icon_OK;
+            //}
+            //else
+            //{
+            //    serverIcon.Image = Properties.Resources.server_icon;
+            //}
+
 
         }
         #endregion MB Settings
@@ -528,7 +549,6 @@ namespace MusicBeePlugin
             try
             {
                 PauseIfPlaying();
-                //csSender.GetChannel<IReceiverChannel>().StopAsync().WaitWithoutException();
                 csSender.Disconnect();
                 csSender = null;
                 UpdateStatus();

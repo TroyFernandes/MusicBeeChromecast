@@ -19,7 +19,7 @@ Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "MusicBee", "E:\Users\Troy\D
 		AttachLaunchAction = No
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoogleCast", "F:\Users\Troy\Downloads\GoogleCast-master\GoogleCast\GoogleCast.csproj", "{17514B85-D288-47CA-B07E-A4C0E7EAE196}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoogleCast", "..\..\GoogleCast\GoogleCast.csproj", "{6B40B865-44F8-4CCC-9C9C-271EB9B31E6B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,14 +41,14 @@ Global
 		{359FF0BF-12BB-4DF4-B550-D68FFA9D1E9C}.Debug|x86.ActiveCfg = Release|x86
 		{359FF0BF-12BB-4DF4-B550-D68FFA9D1E9C}.Release|Any CPU.ActiveCfg = Release|x86
 		{359FF0BF-12BB-4DF4-B550-D68FFA9D1E9C}.Release|x86.ActiveCfg = Release|x86
-		{17514B85-D288-47CA-B07E-A4C0E7EAE196}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{17514B85-D288-47CA-B07E-A4C0E7EAE196}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{17514B85-D288-47CA-B07E-A4C0E7EAE196}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{17514B85-D288-47CA-B07E-A4C0E7EAE196}.Debug|x86.Build.0 = Debug|Any CPU
-		{17514B85-D288-47CA-B07E-A4C0E7EAE196}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{17514B85-D288-47CA-B07E-A4C0E7EAE196}.Release|Any CPU.Build.0 = Release|Any CPU
-		{17514B85-D288-47CA-B07E-A4C0E7EAE196}.Release|x86.ActiveCfg = Release|Any CPU
-		{17514B85-D288-47CA-B07E-A4C0E7EAE196}.Release|x86.Build.0 = Release|Any CPU
+		{6B40B865-44F8-4CCC-9C9C-271EB9B31E6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B40B865-44F8-4CCC-9C9C-271EB9B31E6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B40B865-44F8-4CCC-9C9C-271EB9B31E6B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6B40B865-44F8-4CCC-9C9C-271EB9B31E6B}.Debug|x86.Build.0 = Debug|Any CPU
+		{6B40B865-44F8-4CCC-9C9C-271EB9B31E6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B40B865-44F8-4CCC-9C9C-271EB9B31E6B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B40B865-44F8-4CCC-9C9C-271EB9B31E6B}.Release|x86.ActiveCfg = Release|Any CPU
+		{6B40B865-44F8-4CCC-9C9C-271EB9B31E6B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
