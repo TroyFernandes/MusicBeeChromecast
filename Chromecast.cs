@@ -48,9 +48,9 @@ namespace MusicBeePlugin
             mbApiInterface = new MusicBeeApiInterface();
             mbApiInterface.Initialise(apiInterfacePtr);
             about.PluginInfoVersion = PluginInfoVersion;
-            about.Name = "Chromecast";
-            about.Description = "A brief description of what this plugin does";
-            about.Author = "Troy";
+            about.Name = "MusicBee Chromecast";
+            about.Description = "Adds cast functionality to MusicBee";
+            about.Author = "Troy Fernandes";
             about.TargetApplication = "";   // current only applies to artwork, lyrics or instant messenger name that appears in the provider drop down selector or target Instant Messenger
             about.Type = PluginType.General;
             about.VersionMajor = 1;  // your plugin version
