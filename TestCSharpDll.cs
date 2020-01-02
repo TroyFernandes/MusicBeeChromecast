@@ -37,7 +37,6 @@ namespace MusicBeePlugin
         #endregion Musicbee API Variables
 
         #region Misc Variables
-        private PictureBox serverIcon, libraryIcon, connectionIcon;
         private bool crossfade;
         string library = null;
         #endregion Misc Variables
@@ -70,7 +69,6 @@ namespace MusicBeePlugin
             mainMenuItem.DropDown.Items.Add("Check Status", null, StatusShowInMessagebox);
             mainMenuItem.DropDown.Items.Add("Disconnect from Chromecast", null, (sender, e) => DisconnectFromChromecast(sender, e, false));
             mainMenuItem.DropDown.Items.Add("Stop Server", null, StopWebserver);
-            mainMenuItem.DropDown.Items.Add("Restart Server", null, null);
             mainMenuItem.DropDown.Items.Add("Stop Plugin", null, UserClosingPlugin);
 
             //Save the crossfade settings
@@ -120,7 +118,6 @@ namespace MusicBeePlugin
 
             }
 
-            UpdateStatus();
 
 
         }
@@ -254,72 +251,6 @@ namespace MusicBeePlugin
         #endregion User Saved Settings
 
         #region MB Chromecast UI Elements
-        public int OnDockablePanelCreated(Control panel)
-        {
-            panel.UIThread(() =>
-            {
-                //Chromecast icon
-                PictureBox chromecastSelect = new PictureBox
-                {
-                    Location = new Point(210, 0),
-                    SizeMode = PictureBoxSizeMode.StretchImage,
-                    ClientSize = new Size(25, 21),
-                    Image = Properties.Resources.chromecast_icon_connect
-
-                };
-                chromecastSelect.Click += new EventHandler(OnChromecastSelection);
-                panel.Controls.Add(chromecastSelect);
-
-                //icon
-                serverIcon = new PictureBox
-                {
-                    Location = new Point(130, 5),
-                    SizeMode = PictureBoxSizeMode.StretchImage,
-                    ClientSize = new Size(15, 15),
-                    Image = Properties.Resources.server_icon
-
-                };
-                serverIcon.MouseHover += (sender, e) => pictureBox_MouseHover(sender, e, "Server Status");
-                panel.Controls.Add(serverIcon);
-
-                //icon
-                libraryIcon = new PictureBox
-                {
-                    Location = new Point(155, 5),
-                    SizeMode = PictureBoxSizeMode.StretchImage,
-                    ClientSize = new Size(15, 15),
-                    Image = Properties.Resources.library_icon
-
-                };
-                libraryIcon.MouseHover += (sender, e) => pictureBox_MouseHover(sender, e, "Library Status");
-                panel.Controls.Add(libraryIcon);
-
-                //icon
-                connectionIcon = new PictureBox
-                {
-                    Location = new Point(180, 0),
-                    SizeMode = PictureBoxSizeMode.StretchImage,
-                    ClientSize = new Size(20, 20),
-                    Image = Properties.Resources.connected_icon
-
-                };
-                connectionIcon.MouseHover += (sender, e) => pictureBox_MouseHover(sender, e, "Connection Status");
-                panel.Controls.Add(connectionIcon);
-
-                UpdateStatus();
-
-            });
-
-
-
-            return 0;
-        }
-
-        private void pictureBox_MouseHover(object sender, EventArgs e, string text)
-        {
-            ToolTip tt = new ToolTip();
-            tt.SetToolTip(sender as PictureBox, text);
-        }
 
         #endregion MB Chromecast UI Elements
 
@@ -372,8 +303,6 @@ namespace MusicBeePlugin
 
             }
 
-            UpdateStatus();
-
         }
 
 
@@ -412,7 +341,6 @@ namespace MusicBeePlugin
             StopIfPlaying();
             csSender.Disconnect();
             StopWebserver();
-            UpdateStatus();
             RevertSettings();
             //MessageBox.Show("Chromecast was Disconnected, Closing all resources");
         }
@@ -449,7 +377,6 @@ namespace MusicBeePlugin
             {
                 mediaWebServer.Stop();
                 mediaWebServer = null;
-                UpdateStatus();
                 //MessageBox.Show("Stopped web server successfully");
             }
             catch (NullReferenceException ex)
@@ -483,40 +410,6 @@ namespace MusicBeePlugin
             mbApiInterface.Player_SetCrossfade(crossfade);
         }
 
-        private void UpdateStatus()
-        {
-
-            //if (csSender != null && (csSender as Sender)?.TcpClient != null)
-            //{
-            //    connectionIcon.Image = Properties.Resources.connect_icon_OK;
-            //}
-            //else
-            //{
-            //    connectionIcon.Image = Properties.Resources.connected_icon;
-
-            //}
-
-            //if (library != null)
-            //{
-            //    libraryIcon.Image = Properties.Resources.library_icon_OK;
-            //}
-            //else
-            //{
-            //    libraryIcon.Image = Properties.Resources.library_icon;
-
-            //}
-
-            //if (mediaWebServer != null)
-            //{
-            //    serverIcon.Image = Properties.Resources.server_icon_OK;
-            //}
-            //else
-            //{
-            //    serverIcon.Image = Properties.Resources.server_icon;
-            //}
-
-
-        }
         #endregion MB Settings
 
         #region Helper Functions
@@ -551,7 +444,6 @@ namespace MusicBeePlugin
                 PauseIfPlaying();
                 csSender.Disconnect();
                 csSender = null;
-                UpdateStatus();
             }
             catch (NullReferenceException ex)
             {
