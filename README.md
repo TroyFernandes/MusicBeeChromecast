@@ -14,7 +14,9 @@ For this plugin to work correctly, there are few key things that need to be foll
 First: you need to properly set your music library path. You MUST set it the same way you did in the musicbee setup. For example, if I go to File -> Library -> Add Library, I see that my library is "E:\Users\Troy\Music". When I set up the plugin, I have to set the same exact path.
 
 Second: You need to enter this command for the webserver to run properly:
+
 ``netsh http add urlacl url=http://*:8080/ user=Everyone``
+
  What this command does is allow the webserver to run on an address containing that machines IP address. e.g ``http://192.168.1.27:8080``. Without it, the only address the webserver can listen on is ``http://localhost:8080``, which when sent to the chromecast, it won't be able to resolve the address.
  
 Third: You need to port forward whichever port # you choose in step 2 below. As a troubleshooting test, you should be able to hop onto your phone and type in ``<machine IP>:<port #>`` when the webserver is running, and be able to view the webpage.
