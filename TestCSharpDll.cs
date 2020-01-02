@@ -45,7 +45,6 @@ namespace MusicBeePlugin
         private PictureBox serverIcon, libraryIcon, connectionIcon;
         private bool crossfade;
         string library = null;
-        private TrackbarEx trackbar = null;
         #endregion Misc Variables
 
         #region Musicbee API Methods
@@ -290,23 +289,6 @@ namespace MusicBeePlugin
                 };
                 panel.Controls.Add(connectionIcon);
 
-                trackbar = new TrackbarEx
-                {
-
-                    Capture = true,
-                    AutoSize = false,
-                    Width = 100,
-                    Minimum = 0,
-                    Maximum = 100,
-                    TickStyle = TickStyle.None,
-                    Location = new Point(0, 0)
-                };
-
-                //Get the player volume
-                trackbar.ValueChanged += new EventHandler(trackbar1_ValueChanged);
-
-                panel.Controls.Add(trackbar);
-
                 UpdateStatus();
 
             });
@@ -315,23 +297,6 @@ namespace MusicBeePlugin
             return 0;
         }
 
-        private async void trackbar1_ValueChanged(object sender, EventArgs e)
-        {
-            if (csSender != null)
-            {
-                try
-                {
-
-                    //await csSender.GetChannel<IReceiverChannel>().SetVolumeAsync((float)(sender as TrackbarEx).Value / 100);
-
-                }
-                catch (Exception e2)
-                {
-
-                }
-
-            }
-        }
         #endregion MB Chromecast UI Elements
 
         #region Core Methods
@@ -368,7 +333,6 @@ namespace MusicBeePlugin
 
                 //Maybe move this somewhere else?
                 csSender.GetChannel<IMediaChannel>().StatusChanged += Synchronize_Reciever;
-                csSender.GetChannel<IReceiverChannel>().StatusChanged += Synchronize_Player;
                 csSender.Disconnected += ChromecastDisconnect;
 
             }
@@ -376,18 +340,7 @@ namespace MusicBeePlugin
 
         }
 
-        private void Synchronize_Player(object sender, EventArgs e)
-        {
-            //var x = csSender.GetChannel<IReceiverChannel>().Status.Volume;
-            //var level = (csSender.GetChannel<IReceiverChannel>().Status.Volume.Level * 100);
-            //trackbar.UIThread(() =>
-            //{
-            //    trackbar.Value = (int)level;
-            //});
 
-
-            //Debug.WriteLine("CHROMECAST=VOLUME: " + level);
-        }
 
         //Synchronize changes made directly to the chromecast (i.e by some other remote) to the musicbee player
         private void Synchronize_Reciever(object sender, EventArgs e)
@@ -620,23 +573,4 @@ namespace MusicBeePlugin
         }
     }
 
-    #region Chromecast Volume Trackbar
-    internal partial class TrackbarEx : TrackBar
-    {
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        public extern static int SendMessage(IntPtr hWnd, uint msg, int wParam, int lParam);
-
-        private static int MakeParam(int loWord, int hiWord)
-        {
-            return (hiWord << 16) | (loWord & 0xffff);
-        }
-
-        protected override void OnGotFocus(EventArgs e)
-        {
-            base.OnGotFocus(e);
-            SendMessage(this.Handle, 0x0128, MakeParam(1, 0x1), 0);
-        }
-
-    }
-    #endregion
 }
