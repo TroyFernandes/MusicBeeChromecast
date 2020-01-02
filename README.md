@@ -1,6 +1,28 @@
 # MusicBeeChromecast
 Adds Cast functionality to MusicBee
 
+# What it Can Do
+
+The initial reason for creating this plugin was to use the features of MusicBee (primarily auto DJ) to act as a hub and send the currently playing song to a chromecast device. For this reason, the musicbee interface when connected to the chromecast acts as a partial remote, and dosen't include all the things you would expect. 
+
+If casting to a display enabled chromecast (i.e a CC hooked up to a TV), there won't be any pretty things to look at. Theres no album art, no fancy name (It displays "Default Reciever Application"), and no duration. What will be there however is the Album name, artist name, and song name. 
+
+### This plugin CANNOT:
+1. Control the volume on the chromecast
+2. Reflect changes made in the musicbee interfaces' timeline to the chromecast (i.e no scrubbing) 
+
+I originally had these two features implemented, however I was unhappy in how it was implemented as it both looked ugly and I felt didn't perform well enough.
+
+### The plugin CAN: 
+
+play and pause from the musicbee interface
+
+### What you can do from the chromecast:
+If you use a remote such as the Google Home App, you can:
+1. Scrub on the timeline and changes will be reflected in musicbee
+2. Play and pause
+3. Disconnect the player
+
 # Installation
 
 1. Go to releases and download the zipped file
@@ -13,7 +35,7 @@ For this plugin to work correctly, there are few key things that need to be foll
 
 First: you need to properly set your music library path. You MUST set it the same way you did in the musicbee setup. For example, if I go to File -> Library -> Add Library, I see that my library is "E:\Users\Troy\Music". When I set up the plugin, I have to set the same exact path.
 
-Second: You need to enter this command for the webserver to run properly:
+Second: You need to enter this command in command prompt (admin) for the webserver to run properly:
 
 ``netsh http add urlacl url=http://*:8080/ user=Everyone``
 
