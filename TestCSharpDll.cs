@@ -67,9 +67,12 @@ namespace MusicBeePlugin
             about.ReceiveNotifications = (ReceiveNotificationFlags.PlayerEvents | ReceiveNotificationFlags.TagEvents);
             about.ConfigurationPanelHeight = 25;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
 
+            mbApiInterface.MB_RegisterCommand("Chromecast", OnChromecastSelection);
+
             ToolStripMenuItem mainMenuItem = (ToolStripMenuItem)mbApiInterface.MB_AddMenuItem("mnuTools/MB Chromecast", null, null);
 
             //TODO
+            mainMenuItem.DropDown.Items.Add("Check Status", null, StatusShowInMessagebox);
             mainMenuItem.DropDown.Items.Add("Disconnect from Chromecast", null, (sender, e) => DisconnectFromChromecast(sender, e, false));
             mainMenuItem.DropDown.Items.Add("Stop Server", null, StopWebserver);
             mainMenuItem.DropDown.Items.Add("Restart Server", null, null);
@@ -127,6 +130,8 @@ namespace MusicBeePlugin
 
         }
 
+
+
         public void ReceiveNotification(string sourceFileUrl, NotificationType type)
         {
             switch (type)
@@ -149,6 +154,7 @@ namespace MusicBeePlugin
                         }
 
                         //csSender.GetChannel<IMediaChannel>().SeekAsync(mbApiInterface.Player_GetPosition() / 1000).WaitWithoutException();
+
                     }
 
                     break;
@@ -247,7 +253,7 @@ namespace MusicBeePlugin
                 //Chromecast icon
                 PictureBox chromecastSelect = new PictureBox
                 {
-                    Location = new Point(100, 0),
+                    Location = new Point(210, 0),
                     SizeMode = PictureBoxSizeMode.StretchImage,
                     ClientSize = new Size(25, 21),
                     Image = Properties.Resources.chromecast_icon_connect
@@ -259,34 +265,37 @@ namespace MusicBeePlugin
                 //icon
                 serverIcon = new PictureBox
                 {
-                    Location = new Point(150, 0),
+                    Location = new Point(130, 5),
                     SizeMode = PictureBoxSizeMode.StretchImage,
                     ClientSize = new Size(15, 15),
                     Image = Properties.Resources.server_icon
 
                 };
+                serverIcon.MouseHover += (sender, e) => pictureBox_MouseHover(sender, e, "Server Status");
                 panel.Controls.Add(serverIcon);
 
                 //icon
                 libraryIcon = new PictureBox
                 {
-                    Location = new Point(175, 0),
+                    Location = new Point(155, 5),
                     SizeMode = PictureBoxSizeMode.StretchImage,
                     ClientSize = new Size(15, 15),
                     Image = Properties.Resources.library_icon
 
                 };
+                libraryIcon.MouseHover += (sender, e) => pictureBox_MouseHover(sender, e, "Library Status");
                 panel.Controls.Add(libraryIcon);
 
                 //icon
                 connectionIcon = new PictureBox
                 {
-                    Location = new Point(200, -5),
+                    Location = new Point(180, 0),
                     SizeMode = PictureBoxSizeMode.StretchImage,
                     ClientSize = new Size(20, 20),
                     Image = Properties.Resources.connected_icon
 
                 };
+                connectionIcon.MouseHover += (sender, e) => pictureBox_MouseHover(sender, e, "Connection Status");
                 panel.Controls.Add(connectionIcon);
 
                 UpdateStatus();
@@ -295,6 +304,12 @@ namespace MusicBeePlugin
 
 
             return 0;
+        }
+
+        private void pictureBox_MouseHover(object sender, EventArgs e, string text)
+        {
+            ToolTip tt = new ToolTip();
+            tt.SetToolTip(sender as PictureBox, text);
         }
 
         #endregion MB Chromecast UI Elements
@@ -401,7 +416,7 @@ namespace MusicBeePlugin
             }
             catch (Exception e)
             {
-                //Catch error here: TODO
+                MessageBox.Show("Error starting the webserver. \n " + e.Message);
                 return -1;
             }
 
@@ -478,7 +493,6 @@ namespace MusicBeePlugin
             else
             {
                 serverIcon.Image = Properties.Resources.server_icon;
-
             }
 
         }
@@ -549,9 +563,37 @@ namespace MusicBeePlugin
         }
 
 
+        private void StatusShowInMessagebox(object sender, EventArgs e)
+        {
+            StringBuilder status = new StringBuilder();
+            if (csSender != null && (csSender as Sender).TcpClient != null)
+            {
+                status.Append("Chromecast Connection: OK\n");
+            }
+            else
+            {
+                status.Append("Chromecast Connection: NOT CONNECTED\n");
+            }
 
+            if (library != null)
+            {
+                status.Append("Library Set: OK\n");
+            }
+            else
+            {
+                status.Append("Library Set: NOT SET\n");
+            }
 
-
+            if (mediaWebServer != null)
+            {
+                status.Append("Server Running: OK\n");
+            }
+            else
+            {
+                status.Append("Server Running: NOT RUNNING\n");
+            }
+            MessageBox.Show(status.ToString());
+        }
 
     }
 
