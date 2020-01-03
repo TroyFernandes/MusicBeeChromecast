@@ -110,14 +110,9 @@ namespace MusicBeePlugin
 
             StopWebserver();
 
-            if (csSender != null && csSender.TcpClient != null)
-            {
-                PauseIfPlaying();
-                csSender.Disconnect();
-                csSender = null;
 
-            }
 
+            csSender = null;
 
 
         }
