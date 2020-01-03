@@ -59,6 +59,12 @@ Third: You need to port forward whichever port # you choose in step 2 below. As 
 # How to Use
 The plugin will find all available devices/speaker groups you've created. To use the plugin, click the Toolbar Icon/text you created in the previous steps, a window with all the available devices will pop up. Simply choose one you want to connect to and it should connect successfully. You can go to Tools -> MB Chromecast -> Check status, to see if everything is running. 
 
+# Troubleshooting
+
+1. You can go to Tools -> MB Chromecast -> Check status to check the status of the web server, the library, and the chromecast connection
+2. If you hear the connection sound, but no music is playing, you most likely have an issue with your port forwarding on the webserver. A good tip to try is after connecting to a chromecast, go on your phone and enter in a browser the 
+``<machines IP>:<Port#>`` e.g ``192.168.1.27:8080``. If you're able to see the files, then the chromecast will be able to as well
+
 # Libraries Used
 
 - [GoogleCast](https://github.com/kakone/GoogleCast/tree/master/GoogleCast), with [hig-dev](https://github.com/hig-dev) for his fork
