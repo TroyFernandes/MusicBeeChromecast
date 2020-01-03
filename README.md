@@ -50,7 +50,7 @@ Second: You need to enter this command in command prompt (admin) for the webserv
 Third: You need to port forward whichever port # you choose in step 2 below. You need to create a rule for whichever port you chose to allow incoming connections. As a troubleshooting test, you should be able to hop onto your phone and type in ``<machine IP>:<port #>`` when the webserver is running, and be able to view the webpage.
 
 1. Go to Edit -> Edit Preferences -> Plugins -> Click the "Settings" button under Musicbee Chromecast
-2. Enter a web server port (I recommend 8080)
+2. Enter a web server port (I recommend 8080). NOTE: you must choose a port between 1025-65535
 3. Click the "Browse" Button to browse your musicbee library, and browse to the folder which contains your music
 4. Click save, and restart musicbee
 5. Righclick the toolbar (or on the "Arrange Panels") icon and click "Configure Toolbar"
@@ -64,6 +64,7 @@ The plugin will find all available devices/speaker groups you've created. To use
 1. You can go to Tools -> MB Chromecast -> Check status to check the status of the web server, the library, and the chromecast connection
 2. If you hear the connection sound, but no music is playing, you most likely have an issue with your port forwarding on the webserver. A good tip to try is after connecting to a chromecast, go on your phone and enter in a browser the 
 ``<machines IP>:<Port#>`` e.g ``192.168.1.27:8080``. If you're able to see the files, then the chromecast will be able to as well
+3. If you get an error when trying to save settings. ``Navigate to C:\Users\<YourName>\Appdata\Roaming\MusicBee\MB_Chromecast_Settings.xml`` and delete the file. 
 
 # Libraries Used
 
