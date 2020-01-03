@@ -57,4 +57,8 @@ Third: You need to port forward whichever port # you choose in step 2 below. As 
 # How to Use
 The plugin will find all available devices/speaker groups you've created. To use the plugin, click the Toolbar Icon/text you created in the previous steps, a window with all the available devices will pop up. Simply choose one you want to connect to and it should connect successfully. You can go to Tools -> MB Chromecast -> Check status, to see if everything is running. 
 
-# Features
+# Libraries Used
+
+- [GoogleCast](https://github.com/kakone/GoogleCast/tree/master/GoogleCast), with [hig-dev](https://github.com/hig-dev) for his fork
+- [Nito.AsyncEx](https://www.nuget.org/packages/Nito.AsyncEx)
+- [Microsoft.Owin](https://www.nuget.org/packages/Microsoft.Owin/)
