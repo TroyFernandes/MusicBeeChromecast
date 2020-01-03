@@ -47,7 +47,7 @@ Second: You need to enter this command in command prompt (admin) for the webserv
 
  What this command does is allow the webserver to run on an address containing that machines IP address. e.g ``http://192.168.1.27:8080``. Without it, the only address the webserver can listen on is ``http://localhost:8080``, which when sent to the chromecast, it won't be able to resolve the address.
  
-Third: You need to port forward whichever port # you choose in step 2 below. As a troubleshooting test, you should be able to hop onto your phone and type in ``<machine IP>:<port #>`` when the webserver is running, and be able to view the webpage.
+Third: You need to port forward whichever port # you choose in step 2 below. You need to create a rule for whichever port you chose to allow incoming connections. As a troubleshooting test, you should be able to hop onto your phone and type in ``<machine IP>:<port #>`` when the webserver is running, and be able to view the webpage.
 
 1. Go to Edit -> Edit Preferences -> Plugins -> Click the "Settings" button under Musicbee Chromecast
 2. Enter a web server port (I recommend 8080)
