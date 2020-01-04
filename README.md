@@ -17,7 +17,8 @@ I originally had these two features implemented, however I was unhappy in how it
 
 ### The plugin CAN: 
 
-play and pause from the musicbee interface
+1. play and pause from the musicbee interface
+2. Play the full quality from your music files (e.g FLAC).
 
 ### What you can do from the chromecast:
 If you use a remote such as the Google Home App, you can:
