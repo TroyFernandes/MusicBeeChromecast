@@ -28,7 +28,6 @@ namespace MusicBeePlugin
         #region GoogleCast Chromecast Variables
         private Sender csSender = null;
         private IMediaChannel mediaChannel = null;
-        const string contentType = "audio/flac";
         #endregion GoogleCast Chromecast Variables
 
         #region Musicbee API Variables
@@ -110,10 +109,7 @@ namespace MusicBeePlugin
 
             StopWebserver();
 
-
-
             csSender = null;
-
 
         }
 
@@ -121,8 +117,6 @@ namespace MusicBeePlugin
         {
 
         }
-
-
 
         public void ReceiveNotification(string sourceFileUrl, NotificationType type)
         {
@@ -177,7 +171,6 @@ namespace MusicBeePlugin
                             mediaChannel.LoadAsync(
                                 new MediaInformation()
                                 {
-                                    ContentType = contentType,
                                     ContentId = mediaContentURL + HttpUtility.UrlPathEncode(songName.ToString()), //Where the media is located
                                     StreamType = StreamType.Buffered,
                                     Metadata = new MusicTrackMediaMetadata
@@ -211,6 +204,7 @@ namespace MusicBeePlugin
         #endregion Musicbee API Methods
 
         #region User Saved Settings
+
         //Read the settings file
         private void ReadSettings()
         {
@@ -243,6 +237,7 @@ namespace MusicBeePlugin
                 settingsForm.ShowDialog();
             }
         }
+
         #endregion User Saved Settings
 
         #region MB Chromecast UI Elements
@@ -250,6 +245,7 @@ namespace MusicBeePlugin
         #endregion MB Chromecast UI Elements
 
         #region Core Methods
+
         protected void OnChromecastSelection(object sender, EventArgs e)
         {
             //If the webserver started with no issues
@@ -308,8 +304,6 @@ namespace MusicBeePlugin
 
         }
 
-
-
         //Synchronize changes made directly to the chromecast (i.e by some other remote) to the musicbee player
         private void Synchronize_Reciever(object sender, EventArgs e)
         {
@@ -338,6 +332,7 @@ namespace MusicBeePlugin
                 mbApiInterface.Player_PlayPause();
             }
         }
+
         public void ChromecastDisconnect(object sender, EventArgs e)
         {
             Debug.WriteLine("Disconnected from chromecast");
@@ -345,12 +340,27 @@ namespace MusicBeePlugin
             csSender.Disconnect();
             StopWebserver();
             RevertSettings();
-            //MessageBox.Show("Chromecast was Disconnected, Closing all resources");
+        }
+
+        public void DisconnectFromChromecast(object sender, EventArgs e, bool userCalled)
+        {
+            try
+            {
+                PauseIfPlaying();
+                csSender.Disconnect();
+                csSender = null;
+            }
+            catch (NullReferenceException ex)
+            {
+                Debug.WriteLine("");
+            }
+
         }
 
         #endregion Core Methods
 
         #region WebServer 
+
         private int StartWebserver()
         {
             //If theres a web server already running, then theres no need to start a new one
@@ -391,11 +401,9 @@ namespace MusicBeePlugin
         #endregion WebServer
 
         #region MB Settings
+
         private void ChangeSettings()
         {
-
-            //TODO: maybe create an array, initialized on startup, then just flip each bool value
-
             //Settings need to be changed because they might change how the player interacts with chromecast.
             //These settings get reverted back to their original settings after
             mbApiInterface.Player_SetMute(true);
@@ -416,6 +424,7 @@ namespace MusicBeePlugin
         #endregion MB Settings
 
         #region Helper Functions
+
         public static string GetLocalIPAddress()
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
@@ -429,7 +438,6 @@ namespace MusicBeePlugin
             throw new Exception("No network adapters with an IPv4 address in the system!");
         }
 
-        //The chromecast plugin won't work if these items aren't initialized
         private bool PrerequisitesMet()
         {
             //The csSender must not be null
@@ -437,25 +445,6 @@ namespace MusicBeePlugin
             //The library path must be set 
             return csSender != null && mediaWebServer != null && !string.IsNullOrEmpty(library);
         }
-
-        #endregion Helper Functions
-
-        public void DisconnectFromChromecast(object sender, EventArgs e, bool userCalled)
-        {
-            try
-            {
-                PauseIfPlaying();
-                csSender.Disconnect();
-                csSender = null;
-            }
-            catch (NullReferenceException ex)
-            {
-                Debug.WriteLine("");
-            }
-
-        }
-
-
 
         public void UserClosingPlugin(object sender, EventArgs e)
         {
@@ -469,6 +458,7 @@ namespace MusicBeePlugin
                 mbApiInterface.Player_PlayPause();
             }
         }
+
         public void StopIfPlaying()
         {
             if (mbApiInterface.Player_GetPlayState() == PlayState.Playing)
@@ -476,7 +466,6 @@ namespace MusicBeePlugin
                 mbApiInterface.Player_Stop();
             }
         }
-
 
         private void StatusShowInMessagebox(object sender, EventArgs e)
         {
@@ -509,6 +498,8 @@ namespace MusicBeePlugin
             }
             MessageBox.Show(status.ToString());
         }
+
+        #endregion Helper Functions
 
     }
 

@@ -86,6 +86,8 @@ namespace MusicBeePlugin
             public CustomContentTypeProvider()
             {
                 Mappings.Add(".flac", "audio/flac");
+                //The webserver can understand to treat the .tmp image files music bee produces as image files,
+                //however the chromecast needs a proper image format sent to it. 
                 Mappings.Add(".tmp", "image/png");
             }
         }
@@ -102,7 +104,6 @@ namespace MusicBeePlugin
                 throw new NullReferenceException("Webserver is null");
             }
         }
-
 
     }
 }
