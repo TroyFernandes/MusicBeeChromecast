@@ -28,7 +28,7 @@ If you use a remote such as the Google Home App, you can:
 
 # Installation
 
-[Installation & Setup Video](https://www.youtube.com/watch?v=_6-A2idqiDw&feature=youtu.be) *Note, port 8080 was already forwarded and not shown here
+[Installation & Setup Video](https://www.youtube.com/watch?v=w1wBcKxM2yM&feature=youtu.be) *Note, port 8080 was already forwarded and not shown here
 
 1. Go to releases and download the zipped file (MB_Chromecast.zip)
 2. Extract the zip and copy the contents (the two .dll files) to your musicbee plugins folder
