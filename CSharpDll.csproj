@@ -233,6 +233,7 @@
   <ItemGroup>
     <EmbeddedResource Include="ChromecastPanel.resx">
       <DependentUpon>ChromecastPanel.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -283,8 +284,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>xcopy.exe /D /E /Y /R "$(ProjectDir)bin\Debug" "E:\Users\Troy\Desktop\MusicbeePortable\MusicBee\Plugins\"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
