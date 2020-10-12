@@ -17,6 +17,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Threading;
 using System.Collections.ObjectModel;
+using NetFwTypeLib;
+using System.Security.Permissions;
 
 namespace MusicBeePlugin
 {
@@ -84,9 +86,9 @@ namespace MusicBeePlugin
 
             AddDeletionHandler(myList);
 
-
             return about;
         }
+
 
         public bool Configure(IntPtr panelHandle)
         {
@@ -547,7 +549,7 @@ namespace MusicBeePlugin
                  try
                  {
 
-                     string songFile = mbApiInterface.NowPlaying_GetFileUrl();
+                string songFile = mbApiInterface.NowPlaying_GetFileUrl();
 
                      var hashed = songFile.GetHashCode();
                      hashed = Math.Abs(hashed);
@@ -567,7 +569,7 @@ namespace MusicBeePlugin
                     {
 
                              //ContentId = mediaContentURL + HttpUtility.UrlPathEncode(songName.ToString()), //Where the media is located
-                             ContentId = HttpUtility.UrlPathEncode("http://192.168.1.232:8080/" + hashed + songFileExt),
+                             ContentId = HttpUtility.UrlPathEncode(mediaContentURL + hashed + songFileExt),
                         StreamType = StreamType.None,
                         Duration = mbApiInterface.NowPlaying_GetDuration(),
                         Metadata = new MusicTrackMediaMetadata
@@ -578,7 +580,7 @@ namespace MusicBeePlugin
                             Images = new[] {
                                         new GoogleCast.Models.Image
                                         {
-                                            Url = "http://192.168.1.232:8080/"+hashed + imageFileExt
+                                            Url = mediaContentURL + hashed + imageFileExt
                                         }},
                         },
 
@@ -612,7 +614,6 @@ namespace MusicBeePlugin
             );
             return true;
         }
-
 
     }
 
