@@ -41,11 +41,6 @@ namespace MusicBeePlugin
         #endregion Musicbee API Variables
 
         #region Misc Variables
-        private bool crossfade;
-
-        CancellationTokenSource source;
-        CancellationToken token;
-        ObservableCollection<string> myList = new ObservableCollection<string>();
 
         #endregion Misc Variables
 
@@ -81,10 +76,7 @@ namespace MusicBeePlugin
             mainMenuItem.DropDown.Items.Add("Stop Plugin", null, UserClosingPlugin);
 
             //Save the crossfade settings
-            crossfade = mbApiInterface.Player_GetCrossfade();
             ReadSettings();
-
-            AddDeletionHandler(myList);
 
             return about;
         }
@@ -115,12 +107,12 @@ namespace MusicBeePlugin
         // MusicBee is closing the plugin (plugin is being disabled by user or MusicBee is shutting down)
         public void Close(PluginCloseReason reason)
         {
-            PauseIfPlaying();
+            csSender.GetChannel<IReceiverChannel>().StopAsync().WaitWithoutException();
             RevertSettings();
 
-            StopWebserver();
-
+            csSender.Disconnect();
             csSender = null;
+            StopWebserver();
 
         }
 
@@ -137,20 +129,22 @@ namespace MusicBeePlugin
 
 
                     //Play and pause the chromecast from the MB player
-                    if (csSender != null)
+                    if (csSender != null && csSender.GetChannel<IMediaChannel>().Status != null)
                     {
                         switch (mbApiInterface.Player_GetPlayState())
                         {
                             case PlayState.Paused:
-                                //csSender.GetChannel<IMediaChannel>().PauseAsync().WaitWithoutException();
+                                csSender.GetChannel<IMediaChannel>().PauseAsync().WaitWithoutException();
                                 break;
 
                             case PlayState.Playing:
-                                //csSender.GetChannel<IMediaChannel>().PlayAsync().WaitWithoutException();
+                                csSender.GetChannel<IMediaChannel>().PlayAsync().WaitWithoutException();
                                 break;
                         }
 
-                        //csSender.GetChannel<IMediaChannel>().SeekAsync(mbApiInterface.Player_GetPosition() / 1000).WaitWithoutException();
+                            csSender.GetChannel<IMediaChannel>().SeekAsync(mbApiInterface.Player_GetPosition() / 1000).WaitWithoutException();
+
+
 
                     }
 
@@ -172,14 +166,8 @@ namespace MusicBeePlugin
                     }
 
 
-                    if (source != null)
-                    {
-                        source.Cancel();
-                        csSender.GetChannel<IMediaChannel>().StopAsync();
-                    }
-                    source = new CancellationTokenSource();
-                    token = source.Token;
-                    SendSong(token);
+                                  
+                    SendSong();
 
                     break;
             }
@@ -248,6 +236,7 @@ namespace MusicBeePlugin
 
                 //Change some musicbee settings
                 ChangeSettings();
+
             }
             catch (Exception ex)
             {
@@ -388,7 +377,6 @@ namespace MusicBeePlugin
             //Settings need to be changed because they might change how the player interacts with chromecast.
             //These settings get reverted back to their original settings after
             mbApiInterface.Player_SetMute(true);
-            mbApiInterface.Player_SetCrossfade(false);
 
 
         }
@@ -399,7 +387,6 @@ namespace MusicBeePlugin
             {
                 mbApiInterface.Player_SetMute(false);
             }
-            mbApiInterface.Player_SetCrossfade(crossfade);
         }
 
         #endregion MB Settings
@@ -526,7 +513,7 @@ namespace MusicBeePlugin
         #endregion Helper Functions
 
 
-        public void SendSong(CancellationToken cts)
+        public void SendSong()
         {
 
 
@@ -598,22 +585,6 @@ namespace MusicBeePlugin
                  }
         }
 
-        public bool AddDeletionHandler(ObservableCollection<string> list)
-        {
-            list.CollectionChanged += new System.Collections.Specialized.NotifyCollectionChangedEventHandler(
-                delegate (object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-                {
-                    if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
-                    {
-                        foreach (string s in list)
-                        {
-                            Debug.WriteLine(s);
-                        }
-                    }
-                }
-            );
-            return true;
-        }
 
     }
 
