@@ -167,6 +167,7 @@
     </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Transactions" />
     <Reference Include="System.Web" />
     <Reference Include="System.Windows" />
     <Reference Include="System.Windows.Forms" />
@@ -277,12 +278,6 @@
     <Resource Include="Resources\server_icon_OK.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\GoogleCast\GoogleCast.csproj">
-      <Project>{6b40b865-44f8-4ccc-9c9c-271eb9b31e6b}</Project>
-      <Name>GoogleCast</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <COMReference Include="NetFwTypeLib">
       <Guid>{58FBCF7C-E7A9-467C-80B3-FC65E8FCCA08}</Guid>
       <VersionMajor>1</VersionMajor>
@@ -292,6 +287,12 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\merged\cc\GoogleCast.csproj">
+      <Project>{32b8e431-2333-4380-9662-61833d860bbe}</Project>
+      <Name>GoogleCast</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

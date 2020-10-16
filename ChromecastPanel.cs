@@ -16,7 +16,7 @@ namespace MusicBeePlugin
     {
         private Color backgroundColor { get; set; }
         public IMediaChannel ChromecastMediaChannel { get; set; } = null;
-        public Sender ChromecastSender { get; set; } = null;
+        //public Sender ChromecastSender { get; set; } = null;
         public bool Disconnect { get; set; } = false;
 
         public ChromecastPanel(Color color)
@@ -80,7 +80,7 @@ namespace MusicBeePlugin
                 var mediaChannel = sender2.GetChannel<IMediaChannel>();
                 await sender2.LaunchAsync(mediaChannel);
 
-                ChromecastSender = sender2;
+                //ChromecastSender = sender2;
                 ChromecastMediaChannel = mediaChannel;
 
                 this.FormClosing -= ChromecastSelection_FormClosing;
