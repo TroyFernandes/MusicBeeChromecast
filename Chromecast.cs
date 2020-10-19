@@ -25,6 +25,7 @@ using System.Timers;
 using System.Collections;
 using System.ComponentModel;
 using Nito.AsyncEx;
+using System.Reflection;
 
 namespace MusicBeePlugin
 {
@@ -55,6 +56,8 @@ namespace MusicBeePlugin
         System.Timers.Timer aTimer;
 
         IterableStack<string> myStack;
+
+        bool waitonce = false;
 
         SongHash songHash;
         public PluginInfo Initialise(IntPtr apiInterfacePtr)
@@ -94,9 +97,15 @@ namespace MusicBeePlugin
             aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
             aTimer.Interval = 5000;
 
+
+
+
+
+
             myStack = new IterableStack<string>();
 
             songHash = new SongHash();
+
 
             return about;
         }
@@ -127,6 +136,7 @@ namespace MusicBeePlugin
         // MusicBee is closing the plugin (plugin is being disabled by user or MusicBee is shutting down)
         public void Close(PluginCloseReason reason)
         {
+
             //mediaChannel.Sender.DisconnectAsync().Ignore();
             EmptyDirectory().WaitWithoutException();
 
@@ -143,51 +153,70 @@ namespace MusicBeePlugin
 
         public void ReceiveNotification(string sourceFileUrl, NotificationType type)
         {
-            switch (type)
-            {                
-                
-                case NotificationType.PlayStateChanged:
+            //mediaChannel != null
+            if (true) {
 
-                    //Play and pause the chromecast from the MB player
-                    if (mediaChannel != null && mediaChannel.Status != null)
-                    {
-                        switch (mbApiInterface.Player_GetPlayState())
+                switch (type)
+                {
+
+                    case NotificationType.PlayStateChanged:
+
+                        //Play and pause the chromecast from the MB player
+                        //if (mediaChannel.Status != null)
+                        //{
+                        //    switch (mbApiInterface.Player_GetPlayState())
+                        //    {
+                        //        case PlayState.Paused:
+                        //            mediaChannel.PauseAsync().WaitWithoutException();
+                        //            break;
+
+                        //        case PlayState.Playing:
+                        //            mediaChannel.PlayAsync().WaitWithoutException();
+                        //            break;
+                        //    }
+
+                        //}
+
+                        break;
+
+
+                    case NotificationType.NowPlayingListChanged:
+
+                        //ProcessNextAndQueue().WaitWithoutException();
+
+                        break;
+
+                    case NotificationType.PluginStartup:
+                        break;
+
+                    case NotificationType.VolumeLevelChanged:
+                        break;
+
+                    case NotificationType.TrackChanged:
+                        Listener l = new Listener(mbApiInterface.NowPlaying_GetDuration(), GetPosition);
+
+                        l.CountChanged += DoSomething;
+
+                        if (!PrerequisitesMet())
                         {
-                            case PlayState.Paused:
-                                mediaChannel.PauseAsync().WaitWithoutException();
-                                break;
-
-                            case PlayState.Playing:
-                                mediaChannel.PlayAsync().WaitWithoutException();
-                                break;
+                            return;
                         }
 
-                    }
+                        aTimer.Enabled = false;
+                        aTimer.Enabled = true;
 
-                    break;
+                        CalculateHash(mbApiInterface.NowPlaying_GetFileUrl(), "current").WaitWithoutException();
 
-                case NotificationType.PluginStartup:
-                    break;
+                        var info = CopySong(sourceFileUrl, songHash.Current).WaitAndUnwrapException();
+                        LoadSong(info.Item1, info.Item2, info.Item3).WaitWithoutException();
 
-                case NotificationType.VolumeLevelChanged:
-                    break;
 
-                case NotificationType.TrackChanged:
 
-                    if (!PrerequisitesMet())
-                    {
-                        return;
-                    }
-                    aTimer.Enabled = false;
-                    aTimer.Enabled = true;
+                        break;
+                }
 
-                    CalculateHash(mbApiInterface.NowPlaying_GetFileUrl()).WaitWithoutException();
 
-                    var info = CopySong(songHash.hash).WaitAndUnwrapException();
-                    LoadSong(info.Item1, info.Item2, info.Item3).WaitWithoutException();
-                    
 
-                    break;
             }
         }
 
@@ -266,12 +295,16 @@ namespace MusicBeePlugin
 
                     mediaChannel = cs.ChromecastMediaChannel;
                     //csSender = cs.ChromecastSender;
+                    //GC.KeepAlive(mediaChannel);
                     if (mediaChannel == null)
                     {
                         RevertSettings();
                         return;
                     }
-
+                    //mediaChannel.QueueStatusChanged += (e2, sender2) =>
+                    //{
+                    //    var q = mediaChannel.QueueStatus;
+                    //};
                     //Change some musicbee settings
                     PauseIfPlaying();
                     ChangeSettings();
@@ -283,7 +316,10 @@ namespace MusicBeePlugin
                     {
                         return;
                     }
+                    mediaChannel.StatusChanged += (e3, sender3) => {
 
+                        Debug.WriteLine("");
+                    };
                 }
                 catch (NullReferenceException ex)
                 {
@@ -377,6 +413,10 @@ namespace MusicBeePlugin
         {
             try
             {
+                if (mediaWebServer == null)
+                {
+                    return;
+                }
                 mediaWebServer.Stop();
                 mediaWebServer = null;
                 //MessageBox.Show("Stopped web server successfully");
@@ -462,7 +502,7 @@ namespace MusicBeePlugin
         private void StatusShowInMessagebox(object sender, EventArgs e)
         {
             StringBuilder status = new StringBuilder();
-            if (mediaChannel != null )
+            if (mediaChannel != null)
             {
                 status.Append("Chromecast Connection: OK\n");
             }
@@ -509,13 +549,11 @@ namespace MusicBeePlugin
 
         }
 
-        public async Task<Tuple<string, string, string>> CopySong(string hashed)
+        public async Task<Tuple<string, string, string>> CopySong(string songFile, string hashed)
         {
 
-            string songFile = mbApiInterface.NowPlaying_GetFileUrl();
-
             string songFileExt = Path.GetExtension(songFile);
-            File.Copy(songFile, @System.IO.Path.GetTempPath() + @"\\MusicBeeChromecast\"+ hashed + songFileExt, true);
+            File.Copy(songFile, @System.IO.Path.GetTempPath() + @"\\MusicBeeChromecast\" + hashed + songFileExt, true);
 
             string imageFile = mbApiInterface.NowPlaying_GetArtworkUrl();
 
@@ -533,28 +571,28 @@ namespace MusicBeePlugin
         public async Task LoadSong(string hashed, string songFileExt, string imageFileExt)
         {
             try {
-            await mediaChannel.LoadAsync(
-            new MediaInformation()
-            {
-
-                ContentId = HttpUtility.UrlPathEncode(mediaContentURL + hashed + songFileExt),
-                StreamType = StreamType.None,
-                Duration = mbApiInterface.NowPlaying_GetDuration()/1000,
-                Metadata = new MusicTrackMediaMetadata
+                await mediaChannel.LoadAsync(
+                new MediaInformation()
                 {
-                    Artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist), //Shows the Artist
+
+                    ContentId = HttpUtility.UrlPathEncode(mediaContentURL + hashed + songFileExt),
+                    StreamType = StreamType.None,
+                    Duration = mbApiInterface.NowPlaying_GetDuration() / 1000,
+                    Metadata = new MusicTrackMediaMetadata
+                    {
+                        Artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist), //Shows the Artist
                     Title = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle), //Shows the Track Title
                     AlbumName = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album),
-                    Images = new[] {
+                        Images = new[] {
                     new GoogleCast.Models.Image
                     {
                         Url = mediaContentURL + hashed + imageFileExt
                     }},
-                    
-                },
+
+                    },
 
 
-            });
+                });
 
                 myStack.Push(hashed.ToString());
 
@@ -569,20 +607,56 @@ namespace MusicBeePlugin
             }
         }
 
-        public async Task QueueItem()
+        public async Task ProcessNextAndQueue()
         {
-            QueueItem[] i = new QueueItem[] { new QueueItem {
+            var nowPlayingIndex = mbApiInterface.NowPlayingList_GetCurrentIndex();
 
-                Media = new MediaInformation()
+            var nextFileUrl = mbApiInterface.NowPlayingList_GetListFileUrl(nowPlayingIndex + 1);
+
+            await CalculateHash(nextFileUrl, "next");
+
+            string[] res = null;
+            var info = mbApiInterface.Library_GetFileTags(nextFileUrl, new[] { MetaDataType.Artist, MetaDataType.TrackTitle, MetaDataType.Album }, ref res);
+            await QueueItem(songHash.Next,
+                Path.GetExtension(nextFileUrl),
+                0,
+                res[0],
+                res[1],
+                res[2]
+                );
+
+            await CopySong(nextFileUrl, songHash.Next);
+        }
+
+
+        public async Task QueueItem(string hashedName, string songFileExt, int duration, string artist, string title, string album)
+        {
+
+            QueueItem[] i = new QueueItem[]
+            {
+                new QueueItem
                 {
-                    ContentId = @"http://192.168.1.232:8000/Legend.mp3",
-                    Metadata = new GenericMediaMetadata
+
+                    Media = new MediaInformation()
                     {
-                        Title = "Legend",
-                    }
-                },
-                Autoplay = true,
-            } };
+                        ContentId = HttpUtility.UrlPathEncode(mediaContentURL + hashedName + songFileExt),
+                        StreamType = StreamType.None,
+                        Duration = duration / 1000,
+                        Metadata = new MusicTrackMediaMetadata
+                        {
+                            Artist = artist, //Shows the Artist
+                            Title = title, //Shows the Track Title
+                            AlbumName = album,
+                            Images = new[] {
+                            new GoogleCast.Models.Image
+                            {
+                                Url = mediaContentURL + hashedName + ".jpg"
+                            }},
+                        }
+                    },
+                    Autoplay = true,
+                 }
+            };
 
             await mediaChannel.QueueInsertAsync(i);
 
@@ -596,9 +670,24 @@ namespace MusicBeePlugin
 
         }
 
-        public async Task CalculateHash(string songName)
+        public async Task CalculateHash(string songName, string which)
         {
-            songHash.hash = Math.Abs(songName.GetHashCode()).ToString();
+            switch (which)
+            {
+                case "previous":
+                    songHash.Previous = Math.Abs(songName.GetHashCode()).ToString();
+                    return;
+
+                case "current":
+                    songHash.Current = Math.Abs(songName.GetHashCode()).ToString();
+                    return;
+
+                case "next":
+                    songHash.Next = Math.Abs(songName.GetHashCode()).ToString();
+                    return;
+            }
+
+
         }
 
         public async Task DeleteOld()
@@ -607,9 +696,10 @@ namespace MusicBeePlugin
             {
                 for (int i = 0; i < myStack.Count(); i++)
                 {
-                    if (myStack.ElementAt(i) != songHash.hash)
+                    var element = myStack.ElementAt(i);
+                    if (element != songHash.Current && element != songHash.Previous && element != songHash.Next)
                     {
-                        DeleteFiles(myStack.ElementAt(i).ToString());
+                        DeleteFiles(element.ToString());
                         myStack.Remove(i);
                     }
                 }
@@ -635,8 +725,24 @@ namespace MusicBeePlugin
 
         }
 
-    }
+        private void GetPosition(object source, ElapsedEventArgs e)
+        {
+//MessageBox.Show((mbApiInterface.NowPlaying_GetDuration()).ToString());
 
+        }
+
+
+
+        private void DoSomething(object sender, EventArgs e)
+        {
+            var t = sender.GetType().GetProperties();
+            var timer = sender.GetType().GetProperty("Timer").GetValue(sender, null);
+            var count = sender.GetType().GetProperty("Count").GetValue(sender, null);
+            var timer2 = (System.Timers.Timer)timer;
+
+            MessageBox.Show(((timer2.Interval * (int)count)/mbApiInterface.NowPlaying_GetDuration()).ToString());
+        }
+    }
 
 
     public static class ControlExtensions
@@ -658,7 +764,9 @@ namespace MusicBeePlugin
     }
 
     public class SongHash {
-        public string hash { get; set; }
+        public string Previous { get; set; }
+        public string Current { get; set; }
+        public string Next { get; set; }
     }
 
 
@@ -721,6 +829,48 @@ namespace MusicBeePlugin
         {
             return items.Count;
         }
+    }
+
+    public class Listener
+    {
+        public event EventHandler CountChanged;
+
+        public int Duration { get; set; }
+        public System.Timers.Timer Timer { get; set; }
+
+        public int Count { get; set; }
+
+        public Listener(int Duration, ElapsedEventHandler handler)
+        {
+            Timer = new System.Timers.Timer();
+            Timer.Elapsed += new ElapsedEventHandler(handler);
+
+            Timer.Elapsed += new ElapsedEventHandler(Increment);
+            Timer.Interval = Duration / 10;
+            Timer.Enabled = true;
+            Count = 1;
+        }
+
+        public void Enable()
+        {
+            Timer.Enabled = false;
+            Timer.Enabled = true;
+        }
+
+        public void Disable()
+        {
+            Timer.Enabled = false;
+        }
+
+        private void Increment(object source, ElapsedEventArgs e)
+        {
+            Count++;
+            if (CountChanged != null)
+            {
+                CountChanged(this, null);
+            }
+        }
+
     }
 
 
