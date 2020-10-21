@@ -36,6 +36,23 @@ namespace MusicBeePlugin
 
             IEnumerable<IReceiver> receiver = await new DeviceLocator().FindReceiversAsync();
 
+            if (receiver.Count() == 0 )
+            {
+                Button b = new Button
+                {
+                    BackColor = Color.Transparent,
+                    ForeColor = ContrastColor(backgroundColor),
+                    FlatStyle = FlatStyle.Flat,
+                    Text = "No Devices",
+                    AutoSize = false,
+                    Width = 200,
+
+                };
+                b.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Transparent;
+                b.FlatAppearance.BorderColor = backgroundColor;
+                flowLayoutPanel1.Controls.Add(b);
+            }
+
             foreach (var x in receiver)
             {
                 Button b = new Button
@@ -52,6 +69,9 @@ namespace MusicBeePlugin
                 b.Click +=
                     new EventHandler((s, e2) => MyButtonHandler(s, e, receiver));
 
+                b.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Transparent;
+                b.FlatAppearance.BorderColor = backgroundColor;
+                
                 flowLayoutPanel1.Controls.Add(b);
             }
 

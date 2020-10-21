@@ -242,42 +242,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\chromecast_icon_connect.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\connect_icon.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\back.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\forward.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\pause.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\play.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\connected_icon.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\library_icon.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\server_icon.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\connect_icon_OK.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\library_icon_OK.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\server_icon_OK.png" />
-  </ItemGroup>
-  <ItemGroup>
     <COMReference Include="NetFwTypeLib">
       <Guid>{58FBCF7C-E7A9-467C-80B3-FC65E8FCCA08}</Guid>
       <VersionMajor>1</VersionMajor>

@@ -56,9 +56,6 @@ namespace MusicBeePlugin
 
         IterableStack<string> myStack;
 
-        bool isQueue = false;
-        bool natural = true;
-
         SongHash songHash;
         public PluginInfo Initialise(IntPtr apiInterfacePtr)
         {
@@ -83,11 +80,8 @@ namespace MusicBeePlugin
 
             ToolStripMenuItem mainMenuItem = (ToolStripMenuItem)mbApiInterface.MB_AddMenuItem("mnuTools/MB Chromecast", null, null);
 
-            //TODO
-            mainMenuItem.DropDown.Items.Add("Check Status", null, StatusShowInMessagebox);
+            mainMenuItem.DropDown.Items.Add("Check Status", null, ShowStatusInMessagebox);
             mainMenuItem.DropDown.Items.Add("Disconnect from Chromecast", null, (sender, e) => DisconnectFromChromecast(sender, e, false));
-            mainMenuItem.DropDown.Items.Add("Stop Server", null, StopWebserver);
-            mainMenuItem.DropDown.Items.Add("Stop Plugin", null, UserClosingPlugin);
 
             ReadSettings();
 
@@ -97,19 +91,12 @@ namespace MusicBeePlugin
             aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
             aTimer.Interval = 10000;
 
-
-
-
-
-
             myStack = new IterableStack<string>();
 
             songHash = new SongHash();
 
-
             return about;
         }
-
 
         public bool Configure(IntPtr panelHandle)
         {
@@ -136,13 +123,13 @@ namespace MusicBeePlugin
         // MusicBee is closing the plugin (plugin is being disabled by user or MusicBee is shutting down)
         public void Close(PluginCloseReason reason)
         {
+            StopChromecast();
+            StopWebserver();
 
-            //mediaChannel.Sender.DisconnectAsync().Ignore();
             EmptyDirectory().WaitWithoutException();
 
             RevertSettings();
 
-            StopWebserver();
 
         }
 
@@ -196,35 +183,13 @@ namespace MusicBeePlugin
                             return;
                         }
 
-                        Listener l = new Listener(mbApiInterface.NowPlaying_GetDuration(), GetPosition);
-                        l.CountChanged += DoSomething;
-
                         aTimer.Enabled = false;
                         aTimer.Enabled = true;
 
-                        if (!isQueue)
-                        {
-                            CalculateHash(sourceFileUrl, "current").WaitWithoutException();
-                            var currentInfo = CopySong(sourceFileUrl, songHash.Current).WaitAndUnwrapException();
+                        CalculateHash(mbApiInterface.NowPlaying_GetFileUrl(), "current").WaitWithoutException();
 
-                            var nextFileURL = NextFileURL();
-                            CalculateHash(nextFileURL, "next").WaitWithoutException();
-                            var nextInfo = CopySong(nextFileURL, songHash.Next).WaitAndUnwrapException();
-
-                            List<SongInfo> temp = new List<SongInfo>() {
-                            new SongInfo { Hashed = currentInfo.Item1, SongFileExt = currentInfo.Item2, FileURL = sourceFileUrl},
-                            new SongInfo { Hashed = nextInfo.Item1, SongFileExt = nextInfo.Item2, FileURL = nextFileURL }
-                            };
-
-                            LoadSongs(temp).WaitWithoutException();
-                            isQueue = true;
-
-                            
-                        }
-                        else
-                        {
-                            //ProcessNextAndQueue().WaitWithoutException();
-                        }
+                        var info = CopySong(sourceFileUrl, songHash.Current).WaitAndUnwrapException();
+                        LoadSong(info.Item1, info.Item2);
 
                         break;
                 }
@@ -308,20 +273,12 @@ namespace MusicBeePlugin
 
 
                     mediaChannel = cs.ChromecastMediaChannel;
-                    //csSender = cs.ChromecastSender;
-                    //GC.KeepAlive(mediaChannel);
                     if (mediaChannel == null)
                     {
                         RevertSettings();
                         return;
                     }
-
-                    mediaChannel.QueueStatusChanged += (e2, sender2) =>
-                    {
-                        var q = mediaChannel.QueueStatus;
-                    };
-                    
-                    
+    
                     //Change some musicbee settings
                     PauseIfPlaying();
                     ChangeSettings();
@@ -333,10 +290,7 @@ namespace MusicBeePlugin
                     {
                         return;
                     }
-                    mediaChannel.StatusChanged += (e3, sender3) => {
 
-                        Debug.WriteLine("");
-                    };
                 }
                 catch (NullReferenceException ex)
                 {
@@ -350,7 +304,10 @@ namespace MusicBeePlugin
         //Synchronize changes made directly to the chromecast (i.e by some other remote) to the musicbee player
         private void Synchronize_Reciever(object sender, EventArgs e)
         {
-
+            if (mediaChannel == null)
+            {
+                return;
+            }
             var obj = mediaChannel.Status;
             if (obj == null)
             {
@@ -379,6 +336,7 @@ namespace MusicBeePlugin
         public void ChromecastDisconnect(object sender, EventArgs e)
         {
             Debug.WriteLine("Disconnected from chromecast");
+            mediaChannel = null;
             StopIfPlaying();
             StopWebserver();
             RevertSettings();
@@ -388,13 +346,10 @@ namespace MusicBeePlugin
         {
             try
             {
-                PauseIfPlaying();
-                mediaChannel.Sender.DisconnectAsync().WaitWithoutException();
-
+                StopChromecast();
             }
-            catch (NullReferenceException ex)
+            catch (NullReferenceException)
             {
-                Debug.WriteLine("");
             }
 
         }
@@ -430,15 +385,16 @@ namespace MusicBeePlugin
         {
             try
             {
+                StopChromecast();
+
                 if (mediaWebServer == null)
                 {
                     return;
                 }
                 mediaWebServer.Stop();
                 mediaWebServer = null;
-                //MessageBox.Show("Stopped web server successfully");
             }
-            catch (NullReferenceException ex)
+            catch (NullReferenceException)
             {
                 //Nothing to do since there was no web server initialized in the first place
             }
@@ -516,26 +472,26 @@ namespace MusicBeePlugin
             }
         }
 
-        private void StatusShowInMessagebox(object sender, EventArgs e)
+        private void ShowStatusInMessagebox(object sender, EventArgs e)
         {
             StringBuilder status = new StringBuilder();
             if (mediaChannel != null)
             {
-                status.Append("Chromecast Connection: OK\n");
+                status.Append("Chromecast: Connected\n");
             }
             else
             {
-                status.Append("Chromecast Connection: NOT CONNECTED\n");
+                status.Append("Chromecast: Not Connected\n");
             }
 
 
             if (mediaWebServer != null)
             {
-                status.Append("Server Running: OK\n");
+                status.Append("Server Status: Running @ " + mediaContentURL + "\n");
             }
             else
             {
-                status.Append("Server Running: NOT RUNNING\n");
+                status.Append("Server Status: Not Running\n");
             }
             MessageBox.Show(status.ToString());
         }
@@ -559,7 +515,7 @@ namespace MusicBeePlugin
                 }
 
             }
-            catch (System.IO.IOException e)
+            catch (System.IO.IOException)
             {
 
             }
@@ -597,15 +553,14 @@ namespace MusicBeePlugin
                     Duration = mbApiInterface.NowPlaying_GetDuration() / 1000,
                     Metadata = new MusicTrackMediaMetadata
                     {
-                        Artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist), //Shows the Artist
-                    Title = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle), //Shows the Track Title
-                    AlbumName = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album),
+                        Artist = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Artist),
+                        Title = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.TrackTitle),
+                        AlbumName = mbApiInterface.NowPlaying_GetFileTag(MetaDataType.Album),
                         Images = new[] {
-                    new GoogleCast.Models.Image
-                    {
-                        Url = mediaContentURL + hashed + ".jpg"
-                    }},
-
+                        new GoogleCast.Models.Image
+                        {
+                            Url = mediaContentURL + hashed + ".jpg"
+                        }},
                     },
 
 
@@ -632,7 +587,7 @@ namespace MusicBeePlugin
             await CalculateHash(nextFileUrl, "next");
 
             string[] res = null;
-            var info = mbApiInterface.Library_GetFileTags(nextFileUrl, new[] { MetaDataType.Artist, MetaDataType.TrackTitle, MetaDataType.Album }, ref res);
+            mbApiInterface.Library_GetFileTags(nextFileUrl, new[] { MetaDataType.Artist, MetaDataType.TrackTitle, MetaDataType.Album }, ref res);
             await QueueItem(songHash.Next,
                 Path.GetExtension(nextFileUrl),
                 0,
@@ -671,8 +626,8 @@ namespace MusicBeePlugin
                         Duration = duration / 1000,
                         Metadata = new MusicTrackMediaMetadata
                         {
-                            Artist = artist, //Shows the Artist
-                            Title = title, //Shows the Track Title
+                            Artist = artist,
+                            Title = title,
                             AlbumName = album,
                             Images = new[] {
                             new GoogleCast.Models.Image
@@ -744,7 +699,7 @@ namespace MusicBeePlugin
                 }
 
             }
-            catch (System.IO.IOException e)
+            catch (System.IO.IOException)
             {
 
             }
@@ -763,7 +718,6 @@ namespace MusicBeePlugin
             {
                 var index = mbApiInterface.NowPlayingList_GetCurrentIndex();
                 ProcessNextAndQueue(index+1).WaitWithoutException();
-                natural = true;
             }
         }
 
@@ -785,8 +739,8 @@ namespace MusicBeePlugin
                         Duration = mbApiInterface.NowPlaying_GetDuration() / 1000,
                         Metadata = new MusicTrackMediaMetadata
                         {
-                            Artist = res[0], //Shows the Artist
-                            Title = res[1], //Shows the Track Title
+                            Artist = res[0],
+                            Title = res[1],
                             AlbumName = res[2],
                             Images = new[] {
                             new GoogleCast.Models.Image
@@ -812,7 +766,14 @@ namespace MusicBeePlugin
             }
         }
 
-
+        public void StopChromecast()
+        {
+            if (mediaChannel != null)
+            {
+                mediaChannel.StopAsync();
+                mediaChannel = null;
+            }
+        }
     }
 
 
