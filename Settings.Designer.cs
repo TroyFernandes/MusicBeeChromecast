@@ -62,7 +62,7 @@
             this.serverPortSelect.Size = new System.Drawing.Size(59, 20);
             this.serverPortSelect.TabIndex = 2;
             this.serverPortSelect.Value = new decimal(new int[] {
-            23614,
+            8080,
             0,
             0,
             0});

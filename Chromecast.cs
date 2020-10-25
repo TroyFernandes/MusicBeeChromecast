@@ -26,40 +26,44 @@ using System.Collections;
 using System.ComponentModel;
 using Nito.AsyncEx;
 using System.Reflection;
+using System.Net.NetworkInformation;
 
 namespace MusicBeePlugin
 {
     public partial class Plugin
     {
         #region WebServer Variables
+
         private int? WebserverPort;
         private WebServer mediaWebServer;
         string mediaContentURL = null;
+
         #endregion WebServer Variables
 
         #region GoogleCast Chromecast Variables
+
         private IMediaChannel mediaChannel = null;
+
         #endregion GoogleCast Chromecast Variables
 
         #region Musicbee API Variables
+
         private MusicBeeApiInterface mbApiInterface;
         private PluginInfo about = new PluginInfo();
+
         #endregion Musicbee API Variables
 
         #region Misc Variables
 
+        System.Timers.Timer fileDeletionTimer;
+        System.Timers.Timer progressTimer;
+        IterableStack<string> filenameStack;
+        SongHash songHash;
+        bool natural = false;
+
         #endregion Misc Variables
 
         #region Musicbee API Methods
-
-        System.Timers.Timer aTimer;
-
-        System.Timers.Timer aTimer2;
-
-        IterableStack<string> myStack;
-
-        SongHash songHash;
-        bool natural = false;
 
         public PluginInfo Initialise(IntPtr apiInterfacePtr)
         {
@@ -67,7 +71,7 @@ namespace MusicBeePlugin
             mbApiInterface.Initialise(apiInterfacePtr);
             about.PluginInfoVersion = PluginInfoVersion;
             about.Name = "MusicBee Chromecast";
-            about.Description = "Adds cast functionality to MusicBee";
+            about.Description = "Adds casting functionality to MusicBee";
             about.Author = "Troy Fernandes";
             about.TargetApplication = "";   // current only applies to artwork, lyrics or instant messenger name that appears in the provider drop down selector or target Instant Messenger
             about.Type = PluginType.General;
@@ -80,27 +84,26 @@ namespace MusicBeePlugin
             about.ConfigurationPanelHeight = 25;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
 
             mbApiInterface.MB_RegisterCommand("Chromecast", OnChromecastSelection);
-
+            
 
             ToolStripMenuItem mainMenuItem = (ToolStripMenuItem)mbApiInterface.MB_AddMenuItem("mnuTools/MB Chromecast", null, null);
 
             mainMenuItem.DropDown.Items.Add("Check Status", null, ShowStatusInMessagebox);
             mainMenuItem.DropDown.Items.Add("Disconnect from Chromecast", null, (sender, e) => DisconnectFromChromecast(sender, e, false));
-
             ReadSettings();
 
-            EmptyDirectory();
+            _ = EmptyDirectory();
 
-            aTimer = new System.Timers.Timer();
-            aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
-            aTimer.Interval = 10000;
+            fileDeletionTimer = new System.Timers.Timer();
+            fileDeletionTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
+            fileDeletionTimer.Interval = 10000;
 
-            myStack = new IterableStack<string>();
+            filenameStack = new IterableStack<string>();
 
             songHash = new SongHash();
 
-            aTimer2 = new System.Timers.Timer();
-            aTimer2.Elapsed += new ElapsedEventHandler(DoSomething);
+            progressTimer = new System.Timers.Timer();
+            progressTimer.Elapsed += new ElapsedEventHandler(DoSomething);
 
             return about;
         }
@@ -175,7 +178,7 @@ namespace MusicBeePlugin
 
                     case NotificationType.NowPlayingListChanged:
                         natural = false;
-                        aTimer2.Enabled = false;
+                        progressTimer.Enabled = false;
                         break;
 
                     case NotificationType.PluginStartup:
@@ -191,22 +194,19 @@ namespace MusicBeePlugin
                             return;
                         }
 
-                        //l.Enable();
-                        //l.SetDuration(mbApiInterface.NowPlaying_GetDuration());
+                        progressTimer.Interval = (mbApiInterface.NowPlaying_GetDuration() / 10) * 8 ;
+                        progressTimer.Enabled = false;
+                        progressTimer.Enabled = true;
 
-                        aTimer2.Interval = (mbApiInterface.NowPlaying_GetDuration() / 10) * 8 ;
-                        aTimer2.Enabled = false;
-                        aTimer2.Enabled = true;
-
-                        aTimer.Enabled = false;
-                        aTimer.Enabled = true;
+                        fileDeletionTimer.Enabled = false;
+                        fileDeletionTimer.Enabled = true;
 
                         if (!natural)
                         {
                             CalculateHash(mbApiInterface.NowPlaying_GetFileUrl(), "current").WaitWithoutException();
 
                             var info = CopySong(sourceFileUrl, songHash.Current).WaitAndUnwrapException();
-                            LoadSong(info.Item1, info.Item2);
+                            _ = LoadSong(info.Item1, info.Item2);
                         }
                         else
                         {
@@ -392,7 +392,7 @@ namespace MusicBeePlugin
                 //Create the web server
                 mediaWebServer = new WebServer(WebserverPort);
                 //Save the web server url
-                mediaContentURL = "http://" + GetLocalIPAddress() + ":" + WebserverPort + "/";
+                mediaContentURL = "http://" + GetLocalIP() + ":" + WebserverPort + "/";
                 return 0;
             }
             catch (Exception e)
@@ -452,18 +452,54 @@ namespace MusicBeePlugin
             return true;
         }
 
-        public static string GetLocalIPAddress()
+        public string GetLocalIP()
         {
-            var host = Dns.GetHostEntry(Dns.GetHostName());
-            foreach (var ip in host.AddressList)
+            UnicastIPAddressInformation mostSuitableIp = null;
+
+            var networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
+
+            foreach (var network in networkInterfaces)
             {
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                if (network.OperationalStatus != OperationalStatus.Up)
+                    continue;
+
+                var properties = network.GetIPProperties();
+
+                if (properties.GatewayAddresses.Count == 0)
+                    continue;
+
+                foreach (var address in properties.UnicastAddresses)
                 {
-                    return ip.ToString();
+                    if (address.Address.AddressFamily != AddressFamily.InterNetwork)
+                        continue;
+
+                    if (IPAddress.IsLoopback(address.Address))
+                        continue;
+
+                    if (!address.IsDnsEligible)
+                    {
+                        if (mostSuitableIp == null)
+                            mostSuitableIp = address;
+                        continue;
+                    }
+
+                    // The best IP is the IP got from DHCP server
+                    if (address.PrefixOrigin != PrefixOrigin.Dhcp)
+                    {
+                        if (mostSuitableIp == null || !mostSuitableIp.IsDnsEligible)
+                            mostSuitableIp = address;
+                        continue;
+                    }
+
+                    return address.Address.ToString();
                 }
             }
-            throw new Exception("No network adapters with an IPv4 address in the system!");
+
+            return mostSuitableIp != null
+                ? mostSuitableIp.Address.ToString()
+                : "";
         }
+
 
         private bool PrerequisitesMet()
         {
@@ -592,7 +628,7 @@ namespace MusicBeePlugin
                     
                 });
 
-                myStack.Push(hashed.ToString());
+                filenameStack.Push(hashed.ToString());
 
             }
             catch (OperationCanceledException)
@@ -625,7 +661,7 @@ namespace MusicBeePlugin
                 );
 
 
-            myStack.Push(songHash.Next);
+            filenameStack.Push(songHash.Next);
 
             await CopySong(nextFileUrl, songHash.Next);
             natural = true;
@@ -702,15 +738,15 @@ namespace MusicBeePlugin
 
         public async Task DeleteOld()
         {
-            if (myStack.Count() > 1)
+            if (filenameStack.Count() > 1)
             {
-                for (int i = 0; i < myStack.Count(); i++)
+                for (int i = 0; i < filenameStack.Count(); i++)
                 {
-                    var element = myStack.ElementAt(i);
+                    var element = filenameStack.ElementAt(i);
                     if (element != songHash.Current)
                     {
                         DeleteFiles(element.ToString());
-                        myStack.Remove(i);
+                        filenameStack.Remove(i);
                     }
                 }
             }
@@ -747,7 +783,7 @@ namespace MusicBeePlugin
             //{
                 var index = mbApiInterface.NowPlayingList_GetCurrentIndex();
                 ProcessNextAndQueue(index).WaitWithoutException();
-            aTimer2.Enabled = false;
+            progressTimer.Enabled = false;
             //}
         }
 
@@ -780,7 +816,7 @@ namespace MusicBeePlugin
 
                         }
                     };
-                    myStack.Push(songs[i].Hashed.ToString());
+                    filenameStack.Push(songs[i].Hashed.ToString());
                 }
 
 
