@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.705
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpDll", "CSharpDll.csproj", "{F5D46BA1-6F21-40EF-9695-46105CCACD08}"
 EndProject
@@ -19,7 +19,9 @@ Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "MusicBee", "E:\Users\Troy\D
 		AttachLaunchAction = No
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoogleCast", "..\..\GoogleCast\GoogleCast.csproj", "{6B40B865-44F8-4CCC-9C9C-271EB9B31E6B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MBCCRules", "MBCCRules\MBCCRules.csproj", "{348DC349-4DA9-4AF6-BA4F-A65BE8C10A86}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoogleCast", "..\..\merged\cc\GoogleCast.csproj", "{32B8E431-2333-4380-9662-61833D860BBE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,14 +43,20 @@ Global
 		{359FF0BF-12BB-4DF4-B550-D68FFA9D1E9C}.Debug|x86.ActiveCfg = Release|x86
 		{359FF0BF-12BB-4DF4-B550-D68FFA9D1E9C}.Release|Any CPU.ActiveCfg = Release|x86
 		{359FF0BF-12BB-4DF4-B550-D68FFA9D1E9C}.Release|x86.ActiveCfg = Release|x86
-		{6B40B865-44F8-4CCC-9C9C-271EB9B31E6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6B40B865-44F8-4CCC-9C9C-271EB9B31E6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6B40B865-44F8-4CCC-9C9C-271EB9B31E6B}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{6B40B865-44F8-4CCC-9C9C-271EB9B31E6B}.Debug|x86.Build.0 = Debug|Any CPU
-		{6B40B865-44F8-4CCC-9C9C-271EB9B31E6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6B40B865-44F8-4CCC-9C9C-271EB9B31E6B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6B40B865-44F8-4CCC-9C9C-271EB9B31E6B}.Release|x86.ActiveCfg = Release|Any CPU
-		{6B40B865-44F8-4CCC-9C9C-271EB9B31E6B}.Release|x86.Build.0 = Release|Any CPU
+		{348DC349-4DA9-4AF6-BA4F-A65BE8C10A86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{348DC349-4DA9-4AF6-BA4F-A65BE8C10A86}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{348DC349-4DA9-4AF6-BA4F-A65BE8C10A86}.Debug|x86.Build.0 = Debug|Any CPU
+		{348DC349-4DA9-4AF6-BA4F-A65BE8C10A86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{348DC349-4DA9-4AF6-BA4F-A65BE8C10A86}.Release|x86.ActiveCfg = Release|Any CPU
+		{348DC349-4DA9-4AF6-BA4F-A65BE8C10A86}.Release|x86.Build.0 = Release|Any CPU
+		{32B8E431-2333-4380-9662-61833D860BBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32B8E431-2333-4380-9662-61833D860BBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32B8E431-2333-4380-9662-61833D860BBE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{32B8E431-2333-4380-9662-61833D860BBE}.Debug|x86.Build.0 = Debug|Any CPU
+		{32B8E431-2333-4380-9662-61833D860BBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32B8E431-2333-4380-9662-61833D860BBE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32B8E431-2333-4380-9662-61833D860BBE}.Release|x86.ActiveCfg = Release|Any CPU
+		{32B8E431-2333-4380-9662-61833D860BBE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

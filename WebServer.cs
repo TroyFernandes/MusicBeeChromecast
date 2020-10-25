@@ -48,7 +48,7 @@ namespace MusicBeePlugin
             GC.SuppressFinalize(this);
         }
 
-        public WebServer(string @musicDirectory, int? port_number, string @imageDirectory = null)
+        public WebServer(int? port_number, string @imageDirectory = null)
         {
 
             try
@@ -56,8 +56,10 @@ namespace MusicBeePlugin
                 MEDIA_PORT = port_number ?? throw new Exception("Port Number Undefined");
 
                 var mediaURL = "http://*:" + MEDIA_PORT;
-                var mediaRoot = musicDirectory;
-                var mediaFileSystem = new PhysicalFileSystem(mediaRoot);
+                string path = @System.IO.Path.GetTempPath() + @"\\MusicBeeChromecast";
+                System.IO.Directory.CreateDirectory(path);
+                var mediaFileSystem = new PhysicalFileSystem(path);
+                
                 var mediaServerOptions = new FileServerOptions
                 {
                     EnableDirectoryBrowsing = true,
@@ -66,7 +68,8 @@ namespace MusicBeePlugin
                 mediaServerOptions.StaticFileOptions.ContentTypeProvider = new CustomContentTypeProvider();
 
                 MediaWebServer = WebApp.Start(mediaURL, builder => builder.UseFileServer(mediaServerOptions));
-
+                //Debug.WriteLine(mediaURL);
+                
                 Debug.WriteLine("Listening at " + mediaURL);
 
             }

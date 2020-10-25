@@ -30,9 +30,6 @@
         {
             this.label1 = new System.Windows.Forms.Label();
             this.serverPortSelect = new System.Windows.Forms.NumericUpDown();
-            this.label2 = new System.Windows.Forms.Label();
-            this.libraryPathButton = new System.Windows.Forms.Button();
-            this.directoryLabel = new System.Windows.Forms.Label();
             this.closeText = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.saveText = new System.Windows.Forms.Label();
@@ -65,44 +62,15 @@
             this.serverPortSelect.Size = new System.Drawing.Size(59, 20);
             this.serverPortSelect.TabIndex = 2;
             this.serverPortSelect.Value = new decimal(new int[] {
-            23614,
+            8080,
             0,
             0,
             0});
             // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(21, 69);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(132, 13);
-            this.label2.TabIndex = 3;
-            this.label2.Text = "Musicbee Library Directory";
-            // 
-            // libraryPathButton
-            // 
-            this.libraryPathButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.libraryPathButton.Location = new System.Drawing.Point(159, 64);
-            this.libraryPathButton.Name = "libraryPathButton";
-            this.libraryPathButton.Size = new System.Drawing.Size(75, 23);
-            this.libraryPathButton.TabIndex = 4;
-            this.libraryPathButton.Text = "Browse";
-            this.libraryPathButton.UseVisualStyleBackColor = true;
-            this.libraryPathButton.Click += new System.EventHandler(this.libraryPathButton_Click);
-            // 
-            // directoryLabel
-            // 
-            this.directoryLabel.AutoSize = true;
-            this.directoryLabel.Location = new System.Drawing.Point(21, 93);
-            this.directoryLabel.Name = "directoryLabel";
-            this.directoryLabel.Size = new System.Drawing.Size(43, 13);
-            this.directoryLabel.TabIndex = 5;
-            this.directoryLabel.Text = "Not Set";
-            // 
             // closeText
             // 
             this.closeText.AutoSize = true;
-            this.closeText.Location = new System.Drawing.Point(204, 128);
+            this.closeText.Location = new System.Drawing.Point(204, 62);
             this.closeText.Name = "closeText";
             this.closeText.Size = new System.Drawing.Size(33, 13);
             this.closeText.TabIndex = 6;
@@ -122,7 +90,7 @@
             // saveText
             // 
             this.saveText.AutoSize = true;
-            this.saveText.Location = new System.Drawing.Point(12, 128);
+            this.saveText.Location = new System.Drawing.Point(12, 62);
             this.saveText.Name = "saveText";
             this.saveText.Size = new System.Drawing.Size(32, 13);
             this.saveText.TabIndex = 8;
@@ -133,13 +101,10 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(251, 150);
+            this.ClientSize = new System.Drawing.Size(251, 91);
             this.Controls.Add(this.saveText);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.closeText);
-            this.Controls.Add(this.directoryLabel);
-            this.Controls.Add(this.libraryPathButton);
-            this.Controls.Add(this.label2);
             this.Controls.Add(this.serverPortSelect);
             this.Controls.Add(this.label1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
@@ -156,9 +121,6 @@
 
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.NumericUpDown serverPortSelect;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Button libraryPathButton;
-        private System.Windows.Forms.Label directoryLabel;
         private System.Windows.Forms.Label closeText;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label saveText;

@@ -167,6 +167,7 @@
     </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Transactions" />
     <Reference Include="System.Web" />
     <Reference Include="System.Windows" />
     <Reference Include="System.Windows.Forms" />
@@ -233,6 +234,7 @@
   <ItemGroup>
     <EmbeddedResource Include="ChromecastPanel.resx">
       <DependentUpon>ChromecastPanel.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -240,51 +242,25 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\chromecast_icon_connect.png" />
+    <COMReference Include="NetFwTypeLib">
+      <Guid>{58FBCF7C-E7A9-467C-80B3-FC65E8FCCA08}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\connect_icon.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\back.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\forward.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\pause.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\play.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\connected_icon.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\library_icon.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\server_icon.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\connect_icon_OK.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\library_icon_OK.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\server_icon_OK.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\GoogleCast\GoogleCast.csproj">
-      <Project>{6b40b865-44f8-4ccc-9c9c-271eb9b31e6b}</Project>
+    <ProjectReference Include="..\..\merged\cc\GoogleCast.csproj">
+      <Project>{32b8e431-2333-4380-9662-61833d860bbe}</Project>
       <Name>GoogleCast</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>xcopy.exe /D /E /Y /R "$(ProjectDir)bin\Debug" "E:\Users\Troy\Desktop\MusicbeePortable\MusicBee\Plugins\"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

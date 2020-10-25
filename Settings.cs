@@ -24,29 +24,6 @@ namespace MusicBeePlugin
 
         }
 
-        private void libraryPathButton_Click(object sender, EventArgs e)
-        {
-            string selectedPath = null;
-            var t = new Thread(() =>
-            {
-                FolderBrowserDialog fbd = new FolderBrowserDialog
-                {
-                    RootFolder = Environment.SpecialFolder.MyComputer,
-                    ShowNewFolderButton = false
-                };
-                if (fbd.ShowDialog() == DialogResult.Cancel)
-                    return;
-
-                selectedPath = fbd.SelectedPath;
-            });
-
-            t.SetApartmentState(ApartmentState.STA);
-            t.Start();
-            t.Join();
-
-            directoryLabel.Text = selectedPath;
-
-        }
 
 
         public void CreateSettings()
@@ -59,7 +36,6 @@ namespace MusicBeePlugin
 
                 //Write sub-elements
                 writer.WriteElementString("server_port", ((int)serverPortSelect.Value).ToString());
-                writer.WriteElementString("library_path", directoryLabel.Text);
 
                 // end the root element
                 writer.WriteEndElement();
@@ -78,7 +54,6 @@ namespace MusicBeePlugin
                 {
                     serverPortSelect.Value = Convert.ToDecimal(temp);
                 }
-                directoryLabel.Text = doc.GetElementsByTagName("library_path")[0].InnerText;
             }
         }
 
