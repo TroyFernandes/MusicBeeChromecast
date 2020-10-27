@@ -154,7 +154,7 @@ namespace MusicBeePlugin
 
                 switch (type)
                 {
-
+                    
                     case NotificationType.PlayStateChanged:
 
                         //Play and pause the chromecast from the MB player
@@ -619,17 +619,10 @@ namespace MusicBeePlugin
                             Url = mediaContentURL + hashed + ".jpg"
                         }},                       
                     },
-
-                    //CustomData = new Dictionary<string, string>()
-                    //{
-                    //   { "Sample Rate", mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.SampleRate)},
-                    //   { "Position", mbApiInterface.NowPlayingList_GetCurrentIndex().ToString()}
-                    //}
-                    
                 });
 
                 filenameStack.Push(hashed.ToString());
-
+                
             }
             catch (OperationCanceledException)
             {
@@ -778,13 +771,9 @@ namespace MusicBeePlugin
 
         private void DoSomething(object sender, EventArgs e)
         {
-            //var count = sender.GetType().GetProperty("Count").GetValue(sender, null);
-            //if ((int)count == 8)
-            //{
-                var index = mbApiInterface.NowPlayingList_GetCurrentIndex();
-                ProcessNextAndQueue(index).WaitWithoutException();
+            var index = mbApiInterface.NowPlayingList_GetCurrentIndex();
+            ProcessNextAndQueue(index).WaitWithoutException();
             progressTimer.Enabled = false;
-            //}
         }
 
 
