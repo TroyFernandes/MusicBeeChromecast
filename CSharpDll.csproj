@@ -86,6 +86,9 @@
   </PropertyGroup>
   <PropertyGroup />
   <ItemGroup>
+    <Reference Include="FlacLibSharp, Version=3.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\FlacLibSharp.3.2.0\lib\net20\FlacLibSharp.dll</HintPath>
+    </Reference>
     <Reference Include="Google.ProtocolBuffers">
       <HintPath>..\SharpCast-master\SharpCast\bin\Release\Google.ProtocolBuffers.dll</HintPath>
     </Reference>
