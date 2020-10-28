@@ -27,6 +27,7 @@ using System.ComponentModel;
 using Nito.AsyncEx;
 using System.Reflection;
 using System.Net.NetworkInformation;
+using FlacLibSharp;
 
 namespace MusicBeePlugin
 {
@@ -175,10 +176,9 @@ namespace MusicBeePlugin
                         
                         break;
 
-
                     case NotificationType.NowPlayingListChanged:
-                        natural = false;
-                        progressTimer.Enabled = false;
+                        //natural = false;
+                        //progressTimer.Enabled = false;
                         break;
 
                     case NotificationType.PluginStartup:
@@ -194,25 +194,14 @@ namespace MusicBeePlugin
                             return;
                         }
 
-                        progressTimer.Interval = (mbApiInterface.NowPlaying_GetDuration() / 10) * 8 ;
-                        progressTimer.Enabled = false;
-                        progressTimer.Enabled = true;
-
                         fileDeletionTimer.Enabled = false;
                         fileDeletionTimer.Enabled = true;
 
-                        if (!natural)
-                        {
-                            CalculateHash(mbApiInterface.NowPlaying_GetFileUrl(), "current").WaitWithoutException();
+                        CalculateHash(mbApiInterface.NowPlaying_GetFileUrl(), "current").WaitWithoutException();
 
-                            var info = CopySong(sourceFileUrl, songHash.Current).WaitAndUnwrapException();
-                            _ = LoadSong(info.Item1, info.Item2);
-                        }
-                        else
-                        {
-                            songHash.NewCurrent();
-                        }
-                        natural = false;
+                        var info = CopySong(sourceFileUrl, songHash.Current).WaitAndUnwrapException();
+                        _ = LoadSong(info.Item1, info.Item2);
+
                         break;
                 }
 
@@ -318,14 +307,13 @@ namespace MusicBeePlugin
                 {
                     MessageBox.Show(ex.Message);
                 }
-
             }
-
         }
 
         //Synchronize changes made directly to the chromecast (i.e by some other remote) to the musicbee player
         private void Synchronize_Reciever(object sender, EventArgs e)
         {
+            
             if (mediaChannel == null)
             {
                 return;
@@ -353,6 +341,16 @@ namespace MusicBeePlugin
             {
                 mbApiInterface.Player_PlayPause();
             }
+        }
+
+        private void CCNext(object sender, EventArgs e)
+        {
+            mbApiInterface.Player_PlayNextTrack();
+        }
+
+        private void CCPrevious(object sender, EventArgs e)
+        {
+            mbApiInterface.Player_PlayPreviousTrack();
         }
 
         public void ChromecastDisconnect(object sender, EventArgs e)
@@ -449,6 +447,8 @@ namespace MusicBeePlugin
         {
             mediaChannel.StatusChanged += Synchronize_Reciever;
             mediaChannel.Sender.Disconnected += ChromecastDisconnect;
+            mediaChannel.NextRequested += CCNext;
+            mediaChannel.PreviousRequested += CCPrevious;
             return true;
         }
 
@@ -600,7 +600,35 @@ namespace MusicBeePlugin
 
         public async Task LoadSong(string hashed, string songFileExt)
         {
-            try {
+            string filetype = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.Kind).Replace(" audio file", "");
+            string samplerate = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.SampleRate);
+            string bitrate = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.Bitrate);
+            string channels = mbApiInterface.NowPlaying_GetFileProperty(FilePropertyType.Channels);
+            string properties = "";
+            string nextSong = mbApiInterface.NowPlayingList_GetFileTag(mbApiInterface.NowPlayingList_GetNextIndex(1), MetaDataType.TrackTitle)
+                + " by " +mbApiInterface.NowPlayingList_GetFileTag(mbApiInterface.NowPlayingList_GetNextIndex(1), MetaDataType.Artist);
+            nextSong = nextSong == " by " || nextSong == null ? "End of List" : nextSong;
+
+            if (filetype == "FLAC")
+            {
+                using (FlacFile file = new FlacFile(mbApiInterface.NowPlaying_GetFileUrl()))
+                {
+                    properties = filetype + " " + file.StreamInfo.BitsPerSample.ToString() + " bit, " + samplerate + ", " + bitrate + ", " + channels;
+                }
+            }
+            else
+            {
+                properties = filetype + " " + samplerate + ", " + bitrate + ", " + channels;
+
+            }
+
+
+            string[] temp = null;
+            mbApiInterface.NowPlayingList_QueryFilesEx("", ref temp);
+            int size = temp.Count();
+
+            try
+            {
                 await mediaChannel.LoadAsync(
                 new MediaInformation()
                 {
@@ -617,9 +645,18 @@ namespace MusicBeePlugin
                         new GoogleCast.Models.Image
                         {
                             Url = mediaContentURL + hashed + ".jpg"
-                        }},                       
+                        }},
                     },
-                });
+
+                    CustomData = new Dictionary<string, string>()
+                    {
+                       { "Properties", properties},
+                       { "Position", (mbApiInterface.NowPlayingList_GetCurrentIndex()+1).ToString()+ " / " + size.ToString()},
+                       { "Next", nextSong }
+
+                    }
+
+                }) ;
 
                 filenameStack.Push(hashed.ToString());
                 

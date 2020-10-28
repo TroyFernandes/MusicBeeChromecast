@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js">
+    </script>
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+    <video id="receiverVideoElement"></video>
+
+    <div class="container">
+        <div id="splash" class="text">Musicbee</div> <!-- If you want text inside the container -->
+    </div>
+
+    <div>
+        <img id="albumartimage" />
+    </div>
+
+    <div><span id="tracktitle"></span></div>
+    <div><span id="trackartist"></span></div>
+    <div><span id="trackalbum"></span></div>
+    <div><span id="tracksamplerate"></span></div>
+    <div><span id="trackposition"></span></div>
+    <div><span id="totaltime"></span></div>
+    <div><span id="currenttime"></span></div>
+    <div><span id="nexttrack"></span></div>
+
+    <script>
+
+
+        function updateUI(elementId, message) {
+            document.getElementById(elementId).innerHTML = message;
+        }
+
+        function updateImage(message) {
+            var url = message + "?" + new Date().getTime();
+            document.getElementById("albumartimage").src = url;
+            document.getElementById('receiverVideoElement').style.backgroundImage = 'linear-gradient( rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5) ),url("' + url + '")';
+        }
+
+        function fmtMSS(s) { return (s - (s %= 60)) / 60 + (9 < s ? ':' : ':0') + s }
+
+        const context = cast.framework.CastReceiverContext.getInstance();
+        const playerManager = context.getPlayerManager();
+
+        playerManager.setSupportedMediaCommands(cast.framework.messages.Command.ALL_BASIC_MEDIA
+            | cast.framework.messages.Command.PAUSE | cast.framework.messages.Command.QUEUE_NEXT |
+            cast.framework.messages.Command.QUEUE_PREV);
+
+        const playerData = {};
+        const playerDataBinder = new cast.framework.ui.PlayerDataBinder(playerData);
+
+        context.addEventListener(cast.framework.system.EventType.READY, () => {
+            const deviceCapabilities = context.getDeviceCapabilities();
+            if (deviceCapabilities &&
+                deviceCapabilities[cast.framework.system.DeviceCapabilities.DISPLAY_SUPPORTED]) {
+                console.log("Display supported");
+
+                playerDataBinder.addEventListener(
+                    cast.framework.ui.PlayerDataEventType.CURRENT_TIME_CHANGED,
+                    e => {
+                        var currentTime = e.value;
+                        //console.log(currentTime);
+                        var s = parseInt(currentTime % 60);
+                        var m = parseInt((currentTime / 60) % 60);
+                        if (s < 10) {
+                            document.getElementById("currenttime").innerHTML = m + ':0' + s;
+                        }
+                        else {
+                            document.getElementById("currenttime").innerHTML = m + ':' + s;
+                        }
+
+                    });
+
+
+                playerManager.setMessageInterceptor(
+                    cast.framework.messages.MessageType.LOAD,
+                    request => {
+                        console.log(request);
+
+                        document.getElementById("splash").style.visibility = "hidden";
+
+                        // Resolve entity to content id
+                        updateUI('tracktitle', request.media.metadata.title);
+                        updateUI('trackalbum', request.media.metadata.albumName);
+                        updateUI('trackartist', request.media.metadata.artist);
+                        updateUI('totaltime', fmtMSS(request.media.duration));
+                        updateUI('tracksamplerate', request.media.customData[0].Value);
+                        updateUI('trackposition', "Now Playing: " + request.media.customData[1].Value);
+                        updateUI('nexttrack', "Next Up: " + request.media.customData[2].Value);
+
+                        updateImage(request.media.metadata.images[0]['url']);
+
+                        if (request.media.entity && !request.media.contentId) {
+                            return getMediaByEntity(request.media.entity).then(
+                                media => {
+                                    request.media.contentId = media.url;
+                                    return request;
+                                });
+                        }
+                        return request;
+                    });
+
+
+
+            } else {
+                console.log("Display not supported");
+            }
+
+        });
+
+
+        const CHANNEL = 'urn:x-cast:com.google.cast.media';
+        const ctx = cast.framework.CastReceiverContext.getInstance();
+        const options = new cast.framework.CastReceiverOptions();
+
+
+        options.customNamespaces = Object.assign({});
+        options.customNamespaces[CHANNEL] = cast.framework.system.MessageType.JSON;
+
+
+
+
+        playerManager.addEventListener(
+            cast.framework.events.EventType.REQUEST_QUEUE_UPDATE, (event) => {
+                console.log(event.requestData.jump);
+
+                if (event.requestData.jump == 1) {
+                    console.log("NEXT");
+                    const objToSender =
+                    {
+                        type: 'NEXT',
+                        message: 'NEXT'
+                    };
+                    context.sendCustomMessage(CHANNEL, undefined, objToSender);
+                } else {
+                    console.log("PREVIOUS");
+                    const objToSender =
+                    {
+                        type: 'PREVIOUS',
+                        message: 'PREVIOUS'
+                    };
+                    context.sendCustomMessage(CHANNEL, undefined, objToSender);
+                }
+
+            });
+
+        context.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, function (event) {
+            console.log("Disconnected");
+            context.stop();
+
+        });
+
+
+        context.start(options);
+
+
+    </script>
+
+
+</body>
+
+</html>

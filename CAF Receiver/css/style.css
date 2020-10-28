@@ -1,0 +1,183 @@
+@font-face {
+    font-family: 'Product Sans';
+    font-style: normal;
+    src: local('Open Sans'), local('OpenSans'), url(https://fonts.gstatic.com/s/productsans/v5/HYvgU2fE2nRJvZ5JFAumwegdm0LZdjqr5-oayXSOefg.woff2) format('woff2');
+  }
+
+body {
+    overflow: hidden;
+    margin: 0px;
+    padding: 0px;
+}
+
+video {
+    height: 100%;
+    width: 100%;
+    color: #FFFFFF;
+    z-index: 1;
+    position: absolute;
+    background-color: rgb(12, 12, 12);
+    /* Add the blur effect */
+    filter: blur(7px);
+    -webkit-filter: blur(7px);
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+
+#messages span {
+    font-weight: normal;
+}
+
+img {
+    position: relative;
+    z-index: 1;
+    padding: 50px;
+    box-sizing: border-box;
+    resize: horizontal;
+    overflow: auto;
+    max-width: 100%;
+    height: calc(100vh - 140px);
+    margin-top: 2%;
+    margin-left: 3%;
+  }
+  
+#splash{
+    position: absolute;
+    font-family: Product Sans;
+    font: bold;
+    font-size: 100px;
+    z-index: 1;
+    top: 40%;
+    left: 33%;
+    color: white;
+}
+
+  #totaltime {
+    font-size: 20px;
+    font-family: Product Sans;
+    color: white;
+    float: left;
+    margin-left: 90%;
+    margin-top: 0%;
+    z-index: 2;
+    position: absolute;
+    font-weight: bold;
+    width: 5%;
+    height: 3%;
+    border: 0px solid blue;
+    text-align: right;
+
+}
+#currenttime {
+    font-size: 20px;
+    font-family: Product Sans;
+    color: white;
+    float: left;
+    margin-left: 7.3%;
+    margin-top: 0%;
+    z-index: 2;
+    position: absolute;
+    font-weight: bold;
+    width: 5%;
+    height: 3%;
+    border: 0px solid blue;
+
+}
+
+#tracktitle {
+    font-size: 65px;
+    font-family: Product Sans;
+    color: white;
+    /* float: left; */
+    margin-left: 48%;
+    margin-top: -36.3%;
+    z-index: 1;
+    position: absolute;
+    width: 39%;
+    border: 0px solid blue;
+    font-weight: 800;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+#trackartist {
+    font-size: 40px;
+    font-family: Product Sans;
+    color: white;
+    float: left;
+    margin-left: 48%;
+    margin-top: -24.3%;
+    z-index: 2;
+    position: absolute;
+    font-weight: bold;
+    width: 39%;
+    height: 6.5%;
+    border: 0px solid blue;
+    font-weight: 200;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#trackalbum {
+    font-size: 40px;
+    font-family: Product Sans;
+    color: white;
+    float: left;
+    margin-left: 48%;
+    margin-top: -20.55%;
+    z-index: 2;
+    position: absolute;
+    font-weight: bold;
+    width: 39%;
+    height: 6.5%;
+    border: 0px solid blue;
+    font-weight: 200;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+#tracksamplerate {
+    font-size: 20px;
+    font-family: Product Sans;
+    color: white;
+    float: left;
+    margin-left: 48%;
+    margin-top: -10.3%;
+    z-index: 2;
+    position: absolute;
+    width: 39%;
+    height: 3.5%;
+    border: 0px solid blue;
+    font-weight: 10;
+}
+
+#trackposition {
+    font-size: 20px;
+    font-family: Product Sans;
+    color: white;
+    float: left;
+    margin-left: 48%;
+    margin-top: -8.3%;
+    z-index: 2;
+    position: absolute;
+    width: 39%;
+    height: 3.5%;
+    border: 0px solid blue;
+}
+#nexttrack {
+    font-size: 20px;
+    font-family: Product Sans;
+    color: white;
+    float: left;
+    margin-left: 48%;
+    margin-top: -6.3%;
+    z-index: 2;
+    position: absolute;
+    width: 39%;
+    height: 3.5%;
+    border: 0px solid blue;
+}
