@@ -3,26 +3,11 @@ Adds Cast functionality to MusicBee
 
 **Disclaimer:** I originally didn't intend to release this plugin as I won't have more time to work on it other than bare functionality, however maybe someone else will find this useful so here I am. As a result, this plugin is here "AS-IS". That being said, the plugin is fairly easy to follow along, so feel free to fork this repo and make changes if you like. Just make sure you credit the people who made the packages, as well as me.
 
-# What it Can Do
-
-The initial reason for creating this plugin was to use the features of MusicBee (primarily auto DJ) to act as a hub and send the currently playing song to a chromecast device. For this reason, the musicbee interface when connected to the chromecast acts as a partial remote, and dosen't include all the things you would expect. 
-
-### This plugin CANNOT:
-1. Control the volume on the chromecast
-2. Reflect changes made in the musicbee interfaces' timeline to the chromecast (i.e no scrubbing) 
-
-I originally had these two features implemented, however I was unhappy in how it was implemented as it both looked ugly and I felt didn't perform well enough.
-
-### The plugin CAN: 
-
-1. play and pause the chromecast from the musicbee interface
-2. Play the full quality from your music files (e.g FLAC).
-
-### What you can do from the chromecast:
-If you use a remote such as the Google Home App, you can:
-1. Scrub on the timeline and changes will be reflected in musicbee
-2. Play and pause
-3. Disconnect the player
+# Features
+1. Standard controls from the Chromecast such as play, pause, next, previous
+2. Display music information such as artist, album, album art, queue status, file info, and next songs on chromecast devices with an attached display.
+3. Use the Google voice assistant to control media (Next, Previous, Seek)
+4. Allows casting to speaker groups for multi-room audio
 
 # Installation
 

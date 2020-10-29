@@ -862,7 +862,7 @@ namespace MusicBeePlugin
         {
             if (mediaChannel != null && mediaChannel.Status != null)
             {
-                mediaChannel.StopAsync();
+                mediaChannel.Sender.DisconnectAsync();
             }
             ChromecastDisconnect(null, null);
 
