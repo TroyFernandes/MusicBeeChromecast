@@ -3,6 +3,8 @@ Adds Cast functionality to MusicBee
 
 **Disclaimer:** I originally didn't intend to release this plugin as I won't have more time to work on it other than bare functionality, however maybe someone else will find this useful so here I am. As a result, this plugin is here "AS-IS". That being said, the plugin is fairly easy to follow along, so feel free to fork this repo and make changes if you like. Just make sure you credit the people who made the packages, as well as me.
 
+![UI](https://raw.githubusercontent.com/TroyFernandes/MusicBeeChromecast/master/Images/UI.jpg)
+
 # Features
 1. Standard controls from the Chromecast such as play, pause, next, previous
 2. Display music information such as artist, album, album art, queue status, file info, and next songs on chromecast devices with an attached display.
