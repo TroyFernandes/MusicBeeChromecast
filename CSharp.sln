@@ -21,7 +21,7 @@ Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "MusicBee", "E:\Users\Troy\D
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MBCCRules", "MBCCRules\MBCCRules.csproj", "{348DC349-4DA9-4AF6-BA4F-A65BE8C10A86}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoogleCast", "..\..\merged\cc\GoogleCast.csproj", "{32B8E431-2333-4380-9662-61833D860BBE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GoogleCast", "GoogleCast\GoogleCast.csproj", "{A17F749E-C883-458B-AB82-57B49DDC4D73}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,14 +49,14 @@ Global
 		{348DC349-4DA9-4AF6-BA4F-A65BE8C10A86}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{348DC349-4DA9-4AF6-BA4F-A65BE8C10A86}.Release|x86.ActiveCfg = Release|Any CPU
 		{348DC349-4DA9-4AF6-BA4F-A65BE8C10A86}.Release|x86.Build.0 = Release|Any CPU
-		{32B8E431-2333-4380-9662-61833D860BBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{32B8E431-2333-4380-9662-61833D860BBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{32B8E431-2333-4380-9662-61833D860BBE}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{32B8E431-2333-4380-9662-61833D860BBE}.Debug|x86.Build.0 = Debug|Any CPU
-		{32B8E431-2333-4380-9662-61833D860BBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{32B8E431-2333-4380-9662-61833D860BBE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{32B8E431-2333-4380-9662-61833D860BBE}.Release|x86.ActiveCfg = Release|Any CPU
-		{32B8E431-2333-4380-9662-61833D860BBE}.Release|x86.Build.0 = Release|Any CPU
+		{A17F749E-C883-458B-AB82-57B49DDC4D73}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A17F749E-C883-458B-AB82-57B49DDC4D73}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A17F749E-C883-458B-AB82-57B49DDC4D73}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A17F749E-C883-458B-AB82-57B49DDC4D73}.Debug|x86.Build.0 = Debug|Any CPU
+		{A17F749E-C883-458B-AB82-57B49DDC4D73}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A17F749E-C883-458B-AB82-57B49DDC4D73}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A17F749E-C883-458B-AB82-57B49DDC4D73}.Release|x86.ActiveCfg = Release|Any CPU
+		{A17F749E-C883-458B-AB82-57B49DDC4D73}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

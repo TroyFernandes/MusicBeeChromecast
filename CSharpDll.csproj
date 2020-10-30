@@ -256,8 +256,8 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\merged\cc\GoogleCast.csproj">
-      <Project>{32b8e431-2333-4380-9662-61833d860bbe}</Project>
+    <ProjectReference Include="GoogleCast\GoogleCast.csproj">
+      <Project>{a17f749e-c883-458b-ab82-57b49ddc4d73}</Project>
       <Name>GoogleCast</Name>
     </ProjectReference>
   </ItemGroup>
