@@ -35,7 +35,7 @@ namespace GoogleCast.Channels
         /// <summary>
         /// Gets the application identifier
         /// </summary>
-        public string ApplicationId { get; } = "C202D291";
+        public string ApplicationId { get; } = "CC1AD845";
 
         private Task<Application> GetApplicationAsync()
         {

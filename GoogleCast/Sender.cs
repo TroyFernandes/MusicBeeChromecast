@@ -30,8 +30,6 @@ namespace GoogleCast
         /// </summary>
         public event EventHandler Disconnected;
 
-        public event EventHandler CustomEvent;
-
         /// <summary>
         /// Initializes a new instance of <see cref="Sender"/> class
         /// </summary>
