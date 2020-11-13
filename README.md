@@ -38,7 +38,8 @@ The plugin will find all available devices/speaker groups you've created. To use
 1. You can go to Tools -> MB Chromecast -> Check status to check the status of the web server and the chromecast connection
 2. If you hear the connection sound, but no music is playing, you most likely have an issue with your port forwarding on the webserver. A good tip to try is after connecting to a chromecast, go on your phone and enter in a browser the 
 ``<machines IP>:<Port#>`` e.g ``192.168.1.27:8080``. (You can also find this address under Check Status) If you're able to see the files, then the chromecast will be able to as well
-3. If you get an error when trying to save settings. ``Navigate to C:\Users\<YourName>\Appdata\Roaming\MusicBee\MB_Chromecast_Settings.xml`` and delete the file. 
+3. If you get an error when trying to save settings. ``Navigate to C:\Users\<YourName>\Appdata\Roaming\MusicBee\MB_Chromecast_Settings.xml`` and delete the file.
+4. If you get `The server factory could not be located for the given input: Microsoft.Owin.Host.HttpListener`, try moving the `Microsoft.Owin.Host.HttpListener.dll` to the same folder where the ``MusicBee.exe`` is (i.e up one folder).
 
 # Libraries Used
 
