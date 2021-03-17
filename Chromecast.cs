@@ -85,7 +85,8 @@ namespace MusicBeePlugin
             about.ConfigurationPanelHeight = 25;   // height in pixels that musicbee should reserve in a panel for config settings. When set, a handle to an empty panel will be passed to the Configure function
 
             mbApiInterface.MB_RegisterCommand("Chromecast", OnChromecastSelection);
-            
+            mbApiInterface.MB_RegisterCommand("Chromecast Disconnect", (sender, e) => DisconnectFromChromecast(sender, e, false));
+
 
             ToolStripMenuItem mainMenuItem = (ToolStripMenuItem)mbApiInterface.MB_AddMenuItem("mnuTools/MB Chromecast", null, null);
 
